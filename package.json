@@ -1,0 +1,25 @@
+{
+  "name": "gestor-convocatorias-la-nucia",
+  "version": "1.0.0",
+  "description": "Gestor de convocatorias oficiales para La Nucía Fútbol Sala con soporte de dictado por voz y generación de PDF",
+  "main": "script.js",
+  "scripts": {
+    "start": "live-server --open=index.html",
+    "dev": "live-server --open=index.html"
+  },
+  "keywords": [
+    "futsal",
+    "la-nucia",
+    "speech-recognition",
+    "pdf-generation"
+  ],
+  "author": "La Nucía FS",
+  "license": "ISC",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^6.2.108"
+  }
+}

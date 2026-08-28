@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convocatoria Reunión Inicial 2026-2027 - La Nucía FS</title>
+    <!-- SEO & Metadata -->
+    <meta name="description" content="Convocatoria oficial a la reunión informativa de inicio de temporada 2026-2027 de La Nucía Fútbol Sala.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Design System Variables */
+        :root {
+            --primary-red: #E30613;      /* Official sporting red */
+            --primary-dark: #121212;     /* Matte black */
+            --accent-gray: #7F8C8D;      /* Slate gray */
+            --light-bg: #F8F9FA;         /* Soft background */
+            --paper-bg: #FFFFFF;         /* White paper */
+            --text-dark: #2C3E50;        /* Deep navy-gray for text */
+            --text-light: #6C757D;       /* Light gray for secondary text */
+            --border-light: #E9ECEF;
+            --shadow-subtle: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 15px 35px rgba(227, 6, 19, 0.1);
+        }
+
+        /* General Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        /* Screen Controls */
+        .controls-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .controls-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-print {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(227, 6, 19, 0.2);
+        }
+
+        .btn-print:hover {
+            background-color: #B3000C;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(227, 6, 19, 0.3);
+        }
+
+        .btn-print:active {
+            transform: translateY(0);
+        }
+
+        .btn-print svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        /* Document Container (A4 Concept) */
+        .document-page {
+            width: 100%;
+            max-width: 800px; /* A4 aspect ratio helper */
+            background-color: var(--paper-bg);
+            box-shadow: var(--shadow-subtle);
+            border-radius: 12px;
+            padding: 60px 70px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 1050px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .document-page:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Decorative Header Band */
+        .header-band {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary-red) 0%, var(--primary-dark) 100%);
+        }
+
+        /* Letterhead Header Section */
+        .letterhead-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 25px;
+            margin-bottom: 40px;
+        }
+
+        .club-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .club-logo {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+        }
+
+        .club-meta-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .club-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            line-height: 1.1;
+            text-transform: uppercase;
+        }
+
+        .club-name span {
+            color: var(--primary-red);
+        }
+
+        .club-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            letter-spacing: 2px;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .club-info-header {
+            text-align: right;
+            font-size: 11px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        .club-info-header strong {
+            color: var(--primary-dark);
+        }
+
+        /* Letter Metadata */
+        .letter-metadata {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 35px;
+            font-size: 13px;
+        }
+
+        .letter-date {
+            color: var(--text-light);
+        }
+
+        .letter-ref {
+            font-weight: 600;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+        }
+
+        /* Letter Subject */
+        .letter-subject {
+            margin-bottom: 35px;
+            background-color: var(--light-bg);
+            border-left: 4px solid var(--primary-red);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .letter-subject h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Letter Body */
+        .letter-body {
+            font-size: 15px;
+            color: var(--text-dark);
+            text-align: justify;
+            flex-grow: 1;
+        }
+
+        .letter-body p {
+            margin-bottom: 20px;
+        }
+
+        .salutation {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+        }
+
+        /* Callout Box for Meeting Details */
+        .meeting-box {
+            background-color: #FFF5F5;
+            border: 1px solid rgba(227, 6, 19, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .meeting-detail-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .meeting-detail-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(227, 6, 19, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-red);
+            margin-bottom: 12px;
+        }
+
+        .meeting-detail-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .meeting-detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+
+        .meeting-detail-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .meeting-detail-subtext {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        /* Highlight List */
+        .topics-list {
+            margin: 25px 0 25px 20px;
+            list-style-type: none;
+        }
+
+        .topics-list li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 12px;
+            font-size: 14.5px;
+        }
+
+        .topics-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--primary-red);
+            font-weight: bold;
+        }
+
+        /* Signature Section */
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            page-break-inside: avoid;
+        }
+
+        .signature-block {
+            display: flex;
+            flex-direction: column;
+            width: 250px;
+        }
+
+        .signature-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+
+        .signature-image {
+            height: 65px;
+            object-fit: contain;
+            align-self: flex-start;
+            margin-bottom: 10px;
+            mix-blend-mode: multiply; /* Helps hide white backgrounds of signatures */
+        }
+
+        .signee-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .signee-position {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* Stamp Placeholder / Official touch */
+        .stamp-block {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--border-light);
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            opacity: 0.15;
+            transform: rotate(-15deg);
+        }
+
+        .stamp-block text {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        /* Footer Section */
+        .document-footer {
+            border-top: 1px solid var(--border-light);
+            padding-top: 20px;
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 15px;
+        }
+
+        .footer-socials a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-socials a:hover {
+            color: var(--primary-red);
+        }
+
+        /* Print Media Queries */
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+                color: #000;
+            }
+
+            .controls-container {
+                display: none;
+            }
+
+            .document-page {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+                width: 100%;
+                min-height: auto;
+                border-radius: 0;
+            }
+
+            .header-band {
+                height: 4px;
+            }
+
+            .meeting-box {
+                background-color: #FFF5F5 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .btn-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Controls for web view -->
+    <div class="controls-container">
+        <div class="controls-title">Vista Previa del Documento Oficial</div>
+        <button class="btn-print" onclick="window.print()">
+            <svg viewBox="0 0 24 24">
+                <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+            </svg>
+            Imprimir o Guardar PDF
+        </button>
+    </div>
+
+    <!-- The A4 Document -->
+    <div class="document-page">
+        <!-- Colored top band -->
+        <div class="header-band"></div>
+
+        <!-- Header -->
+        <header class="letterhead-header">
+            <div class="club-logo-container">
+                <img src="La Nucia FS.jpg" alt="Escudo La Nucía FS" class="club-logo">
+                <div class="club-meta-title">
+                    <h1 class="club-name">La Nucía <span>Fútbol Sala</span></h1>
+                    <span class="club-subtitle">Club Deportivo Sporting</span>
+                </div>
+            </div>
+            <div class="club-info-header">
+                <strong>Oficinas del Club</strong><br>
+                Pabellón Municipal Camilo Cano<br>
+                Carrer Partida Muixara, s/n<br>
+                03530 La Nucía, Alicante<br>
+                info@lanuciafs.com
+            </div>
+        </header>
+
+        <!-- Metadata -->
+        <div class="letter-metadata">
+            <div class="letter-ref">Ref: LNF/2026/COM-01</div>
+            <div class="letter-date">La Nucía, a 20 de mayo de 2026</div>
+        </div>
+
+        <!-- Subject -->
+        <div class="letter-subject">
+            <h2>Asunto: Convocatoria a la Reunión Inicial de Presentación - Temporada 2026-2027</h2>
+        </div>
+
+        <!-- Body -->
+        <main class="letter-body">
+            <p class="salutation">Estimadas familias y deportistas del club:</p>
+            
+            <p>Es para nosotros un placer ponernos en contacto con vosotros para daros la bienvenida más cálida a esta nueva etapa. Nos encontramos en los albores de la <strong>temporada 2026-2027</strong>, un año que afrontamos con ilusiones renovadas, nuevos proyectos deportivos y, sobre todo, con el firme compromiso de seguir fomentando los valores de esfuerzo, compañerismo, respeto y superación que caracterizan la identidad de nuestro club, <strong>La Nucía Fútbol Sala</strong>.</p>
+            
+            <p>Queremos que forméis parte activa de este viaje desde el primer minuto. Por ello, os invitamos formalmente a la <strong>reunión inicial de presentación de temporada</strong>, la cual tendrá lugar según los siguientes datos de convocatoria:</p>
+
+            <!-- Meeting Callout -->
+            <div class="meeting-box">
+                <div class="meeting-detail-item">
+                    <div class="meeting-detail-icon">
+                        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                    </div>
+                    <div class="meeting-detail-label">Fecha</div>
+                    <div class="meeting-detail-value">Martes, 1 de Septiembre</div>
+                    <div class="meeting-detail-subtext">Temporada 2026-2027</div>
+                </div>
+                <div class="meeting-detail-item">
+                    <div class="meeting-detail-icon">
+                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    </div>
+                    <div class="meeting-detail-label">Hora convocada</div>
+                    <div class="meeting-detail-value">19:30 h</div>
+                    <div class="meeting-detail-subtext">Ruegos y preguntas al final</div>
+                </div>
+                <div class="meeting-detail-item">
+                    <div class="meeting-detail-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </div>
+                    <div class="meeting-detail-label">Lugar</div>
+                    <div class="meeting-detail-value">Oficinas del Club</div>
+                    <div class="meeting-detail-subtext">Pabellón Camilo Cano</div>
+                </div>
+            </div>
+
+            <p>Durante la reunión se tratarán temas fundamentales para el correcto desarrollo del curso deportivo, entre los que destacamos:</p>
+            
+            <ul class="topics-list">
+                <li>Presentación oficial de la junta directiva y del cuerpo técnico para cada categoría.</li>
+                <li>Objetivos competitivos y metodología de entrenamiento para este año.</li>
+                <li>Horarios y distribución de pistas para entrenamientos semanales.</li>
+                <li>Normativa de régimen interno del club y pautas de conducta familiar y deportiva.</li>
+                <li>Proceso de entrega y gestión de las nuevas equipaciones oficiales.</li>
+            </ul>
+
+            <p>La coordinación entre el club y las familias es la piedra angular del crecimiento personal y deportivo de nuestros jugadores. Vuestra implicación y cercanía son imprescindibles para que los chicos y chicas disfruten y aprendan al máximo. Por ello, os encarecemos a asistir a esta cita para poder resolver dudas y arrancar la temporada con la máxima ilusión y en la misma dirección.</p>
+            
+            <p>Agradeciendo de antemano vuestro continuo apoyo y confianza en nuestra entidad, recibid un afectuoso saludo.</p>
+        </main>
+
+        <!-- Sign-off & Stamp -->
+        <section class="signature-section">
+            <div class="signature-block">
+                <span class="signature-title">Atentamente,</span>
+                <img src="WhatsApp Image 2026-05-20 at 20.10.08.jpeg" alt="Firma Autorizada" class="signature-image">
+                <span class="signee-name">Dirección Deportiva</span>
+                <span class="signee-position">C.D. Sporting La Nucía FS</span>
+            </div>
+            
+            <div class="stamp-block">
+                <svg viewBox="0 0 100 100" width="80" height="80">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4,4"/>
+                    <text x="50" y="45" text-anchor="middle" font-size="7" font-weight="bold" fill="currentColor">LA NUCÍA</text>
+                    <text x="50" y="55" text-anchor="middle" font-size="7" font-weight="bold" fill="currentColor">FÚTBOL SALA</text>
+                    <text x="50" y="65" text-anchor="middle" font-size="5" fill="currentColor">OFICIAL</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="document-footer">
+            <div class="footer-address">
+                © 2026 Club Deportivo Sporting La Nucía Fútbol Sala
+            </div>
+            <div class="footer-socials">
+                <a href="https://www.lanuciafs.com" target="_blank">www.lanuciafs.com</a>
+                <span>•</span>
+                <a href="#">@LaNuciaFS</a>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>

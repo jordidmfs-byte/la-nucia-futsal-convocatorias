@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <script>
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        window.scrollTo(0, 0);
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Entrenador - Gestor de Convocatorias La Nucía FS</title>
+    <!-- SEO & Metadata -->
+    <meta name="description" content="Panel del entrenador de La Nucía Fútbol Sala para la gestión inteligente y dictado de convocatorias oficiales.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- PDF Generation library (Local file to support offline/local execution) -->
+    <script src="html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* Design System Variables */
+        :root {
+            --primary-red: #E30613;
+            --primary-red-hover: #B3000C;
+            --primary-dark: #121212;
+            --glass-bg: rgba(18, 18, 18, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(26, 26, 26, 0.65);
+            --text-light: #F8FAFC;
+            --text-muted: #94A3B8;
+            --whatsapp-green: #25D366;
+            --whatsapp-hover: #128C7E;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-light);
+            min-height: 100vh;
+            background-image: linear-gradient(rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.95)), 
+                              url('https___sdmedia.playser.cadenaser.com_playser_image_202510_10_1760116957620_1760117171_asset_still.jfif');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Container Limit */
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Main Header Banner */
+        .app-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-logo {
+            width: 65px;
+            height: 65px;
+            object-fit: contain;
+        }
+
+        .header-title-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title span {
+            color: var(--primary-red);
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Tab Switcher */
+        .team-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 5px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-light);
+        }
+
+        .tab-btn.active {
+            background: var(--primary-red);
+            color: white;
+            box-shadow: 0 4px 15px rgba(227, 6, 19, 0.3);
+        }
+
+        /* Main Workspace Grid */
+        .workspace-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(227, 6, 19, 0.25);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(227, 6, 19, 0.05);
+        }
+
+        .card-title-container {
+            border-left: 4px solid var(--primary-red);
+            padding-left: 12px;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Form styling */
+        .form-group-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .form-group-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 600px) {
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        label {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        input[type="text"], input[type="number"], select, textarea {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 35px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        select option {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 12px rgba(227, 6, 19, 0.4);
+            background: rgba(0, 0, 0, 0.55);
+        }
+
+        /* Goalkeeper guest picker */
+        .guest-picker-container {
+            background: rgba(227, 6, 19, 0.08);
+            border: 1px dashed rgba(227, 6, 19, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Speech/Voice Area */
+        .voice-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .voice-btn-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-voice {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-voice:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.45);
+        }
+
+        .btn-voice:active {
+            transform: translateY(0);
+        }
+
+        .btn-voice.recording {
+            background: #FF0000;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(255, 0, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+            }
+        }
+
+        .voice-status {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .nlp-log-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .log-entry {
+            font-size: 11.5px;
+            color: #4ADE80;
+            border-left: 2px solid #4ADE80;
+            padding-left: 8px;
+        }
+
+        .log-empty {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 10px;
+        }
+
+        .textarea-controls {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-clear {
+            background: none;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .btn-clear:hover {
+            border-color: white;
+            color: white;
+        }
+
+        /* 2D Futsal Pitch Visualizer */
+        .pitch-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .futsal-pitch {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background: radial-gradient(circle at center, #1e40af 0%, #0f172a 100%);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6), 0 10px 25px rgba(0, 0, 0, 0.4);
+            transition: border-color 0.3s;
+        }
+
+        .futsal-pitch.flash-effect {
+            border-color: #4ADE80;
+        }
+
+        /* Center circle */
+        .futsal-pitch::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Center line */
+        .futsal-pitch::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* Penalty areas (left and right) */
+        .pitch-penalty-left {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 50px;
+            height: 140px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-left: none;
+            border-radius: 0 70px 70px 0;
+            transform: translateY(-50%);
+        }
+
+        .pitch-penalty-right {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 50px;
+            height: 140px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-right: none;
+            border-radius: 70px 0 0 70px;
+            transform: translateY(-50%);
+        }
+
+        /* Player Dot Groups */
+        .pitch-dots-gk {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 60px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .pitch-dots-players {
+            position: absolute;
+            top: 0;
+            left: 70px;
+            right: 20px;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+            align-content: center;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .tactical-dot {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.15), 0 4px 10px rgba(0, 0, 0, 0.5);
+            animation: bounce-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tactical-dot:hover {
+            transform: scale(1.18) translateY(-2px);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.35), 0 8px 15px rgba(0, 0, 0, 0.6);
+        }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .tactical-dot.gk {
+            background: #F59E0B; /* Orange */
+            color: #1E293B;
+            border: 2px solid white;
+        }
+
+        .tactical-dot.field {
+            background: var(--primary-red);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .tactical-name {
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            font-weight: 500;
+            pointer-events: none;
+        }
+
+        /* Player Checkbox list structure */
+        .player-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        /* Individual player row */
+        .player-edit-row {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .player-edit-row:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .player-edit-row.active {
+            border-left: 4px solid #4ADE80;
+        }
+
+        .player-edit-row.inactive {
+            border-left: 4px solid #EF4444;
+            opacity: 0.8;
+        }
+
+        .player-main-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .player-main-info input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4ADE80;
+            cursor: pointer;
+        }
+
+        .player-main-info label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            color: var(--text-light);
+            text-transform: none;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0;
+        }
+
+        .dorsal-badge {
+            background-color: var(--primary-red);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 11px;
+            min-width: 25px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .pos-badge {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 9.5px;
+            text-transform: uppercase;
+        }
+
+        .guest-badge {
+            background-color: #1E3A8A;
+            color: #93C5FD;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .player-action-fields {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reason-select-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #EF4444;
+        }
+
+        .player-action-fields select {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #FCA5A5;
+            border-radius: 6px;
+        }
+
+        /* Action Buttons Box */
+        .actions-bar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-action {
+            flex: 1;
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #990008 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(227, 6, 19, 0.3);
+        }
+
+        .btn-pdf:hover {
+            background: linear-gradient(135deg, var(--primary-red-hover) 0%, #800006 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(227, 6, 19, 0.45);
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, var(--whatsapp-green) 0%, #128C7E 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-whatsapp:hover {
+            background: linear-gradient(135deg, #20ba56 0%, #0d6e62 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.45);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar custom styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Tactile Feedback for Buttons and Tabs */
+        .tab-btn:active, .btn-clear:active {
+            transform: scale(0.95);
+        }
+        .btn-voice:active, .btn-action:active {
+            transform: scale(0.98);
+        }
+
+        /* Responsive design for Tablet & Mobile */
+        @media (max-width: 900px) {
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px 8px;
+            }
+            .app-container {
+                gap: 15px;
+            }
+            .app-header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
+                text-align: center;
+            }
+            .header-left {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .header-logo {
+                width: 50px;
+                height: 50px;
+            }
+            .header-title {
+                font-size: 20px;
+            }
+            .glass-card {
+                padding: 15px;
+                gap: 15px;
+            }
+            .form-group-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+            .player-edit-row {
+                padding: 10px 12px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .player-action-fields {
+                width: 100%;
+                justify-content: flex-end;
+                border-top: 1px dashed rgba(255, 255, 255, 0.1);
+                padding-top: 8px;
+                margin-top: 4px;
+            }
+            .actions-bar {
+                flex-direction: column;
+                gap: 12px;
+                padding: 15px;
+            }
+            .btn-action {
+                padding: 14px 20px;
+                font-size: 15px;
+                width: 100%;
+            }
+            .futsal-pitch {
+                height: 200px;
+            }
+            .tactical-dot {
+                width: 28px;
+                height: 28px;
+                font-size: 10px;
+            }
+            .tactical-name {
+                font-size: 8px;
+                bottom: -14px;
+            }
+        }
+
+        /* Smooth Entrance Animations on Page Load */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-25px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .app-header {
+            animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .workspace-grid > .glass-card:nth-child(1) {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.1s;
+        }
+
+        .workspace-grid > .glass-card:nth-child(2) {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.18s;
+        }
+
+        .workspace-grid > .glass-card:nth-child(3) {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.26s;
+        }
+
+        .workspace-grid > .glass-card:nth-child(4) {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.34s;
+        }
+
+        .actions-bar {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.42s;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Overlay -->
+    <div id="login-overlay" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 9999; justify-content: center; align-items: center; flex-direction: column; padding: 20px;">
+        <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center;">
+            <h1 style="margin-bottom: 20px; color: #1e293b; font-size: 24px;">La Nucía FS</h1>
+            <p style="margin-bottom: 30px; color: #64748b; font-size: 14px;">Introduce tu contraseña para acceder a la gestión de convocatorias.</p>
+            <div style="margin-bottom: 20px; text-align: left;">
+                <input type="password" id="input-password" placeholder="Contraseña..." style="width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none;">
+            </div>
+            <button id="btn-login" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);">
+                Acceder
+            </button>
+            <div id="login-error" style="color: #ef4444; margin-top: 15px; font-size: 14px; display: none;">Contraseña incorrecta</div>
+        </div>
+    </div>
+
+    <!-- Edit Position Overlay -->
+    <div id="edit-position-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 350px;">
+            <h2 style="margin-bottom: 20px; color: white; font-size: 18px; font-family: 'Outfit', sans-serif;">Editar Posición</h2>
+            <p id="edit-position-player-name" style="margin-bottom: 20px; color: #94a3b8; font-size: 14px; font-weight: bold;"></p>
+            
+            <div style="margin-bottom: 25px;">
+                <select id="edit-position-select" style="width: 100%; padding: 12px 15px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--glass-border); border-radius: 8px; font-size: 15px; outline: none;">
+                    <option value="Portero">Portero</option>
+                    <option value="Cierre">Cierre</option>
+                    <option value="Ala zurdo">Ala zurdo</option>
+                    <option value="Ala diestro">Ala diestro</option>
+                    <option value="Pivot diestro">Pivot diestro</option>
+                    <option value="Pivot zurdo">Pivot zurdo</option>
+                    <option value="Sin posición">Sin posición</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="btn-cancel-edit" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s;">Cancelar</button>
+                <button id="btn-save-edit" style="flex: 1; padding: 12px; background: var(--primary-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.3);">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container" id="main-app-container" style="display: none;">
+        <!-- Main Application Header -->
+        <header class="app-header" style="flex-direction: column; justify-content: center; gap: 20px; padding-bottom: 25px;">
+            <div class="header-left" style="flex-direction: column; text-align: center; gap: 15px;">
+                <img src="La Nucia FS.png" alt="Escudo La Nucía FS" class="header-logo" style="width: 90px; height: 90px; filter: drop-shadow(0px 8px 10px rgba(0,0,0,0.6));">
+                <div class="header-titles">
+                    <h1 class="header-title">La Nucía <span>Fútbol Sala</span></h1>
+                    <span class="header-subtitle">Gestor de Convocatorias Oficiales</span>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                    <button id="btn-logout" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Cerrar Sesión</button>
+                    <span id="cloud-status-badge" style="font-size: 12px; color: #10B981; display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); padding: 4px 12px; border-radius: 20px; font-weight: 500;">
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10B981;"></span> Sincronizado en todos los dispositivos
+                    </span>
+                </div>
+                <div class="team-tabs" style="justify-content: center; flex-wrap: wrap;">
+                    <button id="tab-primer-equipo" class="tab-btn active">Primer Equipo</button>
+                    <button id="tab-filial" class="tab-btn">Filial</button>
+                    <button id="tab-juvenil" class="tab-btn">Juvenil</button>
+                    <button id="tab-historial" class="tab-btn">Historial convocatorias</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Grid Area -->
+        <div id="workspace-grid" class="workspace-grid">
+            <!-- Card 1: Datos de la Jornada -->
+            <div class="glass-card">
+                <div class="card-title-container">
+                    <h2 class="card-title">Datos de la Jornada</h2>
+                </div>
+                
+                <!-- Match Details Form -->
+                <div class="form-group-grid">
+                    <div class="form-group">
+                        <label for="input-jornada">Jornada</label>
+                        <select id="input-jornada">
+                            <!-- Filled dynamically in JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-rival">Equipo Rival</label>
+                        <input type="text" id="input-rival" placeholder="Nombre del equipo rival" list="rival-datalist" autocomplete="off">
+                        <datalist id="rival-datalist"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-venue">Instalación / Pabellón</label>
+                        <select id="input-venue">
+                            <option value="Pabellón Camilo Cano">Pabellón Camilo Cano</option>
+                            <option value="Pabellón Muixara">Pabellón Muixara</option>
+                            <option value="Pabellón Benidorm">Pabellón Benidorm</option>
+                            <option value="Pabellón Rival">Pabellón Rival</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-schedule">Fecha y Hora</label>
+                        <input type="datetime-local" id="input-schedule">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-callup-time">Hora de Convocatoria</label>
+                        <input type="time" id="input-callup-time">
+                    </div>
+                    <div class="form-group" id="guest-search-container">
+                        <label id="label-guest-search" for="input-guest-search">Añadir Jugador Invitado</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="input-guest-search" list="guest-datalist" placeholder="Buscar jugador..." autocomplete="off">
+                            <datalist id="guest-datalist"></datalist>
+                            <button id="btn-add-guest-search" style="border: none; cursor: pointer; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border-radius: 8px; padding: 0 12px; font-weight: bold; flex-shrink: 0;" title="Añadir">➕</button>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="input-coach">Entrenador Principal</label>
+                        <input type="text" id="input-coach" placeholder="Nombre del entrenador">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="input-kit">Equipación oficial</label>
+                        <select id="input-kit">
+                            <option value="Primera Equipación">Primera Equipación</option>
+                            <option value="Segunda Equipación">Segunda Equipación</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="input-observations">Observaciones adicionales</label>
+                        <textarea id="input-observations" rows="2" placeholder="Indicaciones sobre hora de llegada, calentamiento, etc."></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Card 3: Alineación Visual -->
+            <div class="glass-card">
+                <div class="card-title-container">
+                    <h2 class="card-title">Alineación Visual (Jugadores Convocados)</h2>
+                </div>
+
+                <!-- 2D Tactical Pitch Preview -->
+                <div class="pitch-container">
+                    <div class="futsal-pitch">
+                        <!-- Goal Penalty areas lines -->
+                        <div class="pitch-penalty-left"></div>
+                        <div class="pitch-penalty-right"></div>
+                        
+                        <!-- Player Dot Containers -->
+                        <div id="pitch-gk" class="pitch-dots-gk"></div>
+                        <div id="pitch-players" class="pitch-dots-players"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Listado de la Plantilla -->
+            <div class="glass-card">
+                <div class="card-title-container">
+                    <h2 class="card-title">Listado de la Plantilla (Selecciona Convocados)</h2>
+                </div>
+
+                <!-- Interactive checklist of squad players -->
+                <div>
+                    <div id="players-checkbox-list" class="player-list-container">
+                        <!-- Dynamically filled with checkboxes -->
+                    </div>
+                    
+                    <!-- Filial Player Actions moved to Datos de la Jornada -->
+                </div>
+            </div>
+
+            <!-- Card 5: Dictado por Voz Inteligente -->
+            <div class="glass-card">
+                <div class="card-title-container">
+                    <h2 class="card-title">Dictado por Voz Inteligente</h2>
+                </div>
+                
+                <div class="voice-btn-container">
+                    <button id="voice-btn" class="btn-voice">
+                        <span class="voice-icon">🎙️</span> Dictar por Voz
+                    </button>
+                    <span id="voice-status-text" class="voice-status">Micrófono inactivo. Haz clic para dictar.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="voice-transcript-output">Texto Transcrito</label>
+                    <textarea id="voice-transcript-output" rows="3" placeholder="El audio dictado aparecerá aquí. Puedes escribir también manualmente. Ej: 'Marcos fuera por lesión'"></textarea>
+                </div>
+                <div class="textarea-controls">
+                    <button id="clear-transcript-btn" class="btn-clear">Limpiar Texto</button>
+                </div>
+
+                <label>Registro de exclusiones automáticas</label>
+                <div id="nlp-status-log" class="nlp-log-container">
+                    <div class="log-empty">Ninguna acción procesada todavía.</div>
+                </div>
+            </div>
+
+            <!-- Card 6: Plan de Viaje (Exclusivo Primer Equipo) -->
+            <div id="plan-viaje-card" class="glass-card" style="display: block;">
+                <div class="card-title-container">
+                    <h2 class="card-title">🚌 Plan de Viaje Oficial (Primer Equipo)</h2>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.4;">
+                        Sube el archivo PDF del Plan de Viaje para este partido. Podrás previsualizarlo directamente y enviarlo por WhatsApp a la expedición del Primer Equipo.
+                    </p>
+
+                    <!-- Hidden file input -->
+                    <input type="file" id="input-plan-viaje-pdf" accept="application/pdf" style="display: none;">
+
+                    <!-- Status box -->
+                    <div id="plan-viaje-status-box" style="padding: 12px 15px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px dashed var(--glass-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="plan-viaje-icon" style="font-size: 24px;">📄</span>
+                            <div>
+                                <div id="plan-viaje-filename" style="font-weight: bold; color: var(--text-light); font-size: 14px;">No hay ningún Plan de Viaje subido</div>
+                                <div id="plan-viaje-info" style="font-size: 12px; color: var(--text-muted);">Selecciona un archivo PDF para adjuntarlo</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-upload-plan-viaje" style="background: linear-gradient(135deg, #E30613 0%, #B3000C 100%); color: white; padding: 8px 14px; font-size: 13px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: transform 0.2s;">
+                                📤 Subir PDF
+                            </button>
+                            <button id="btn-delete-plan-viaje" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; padding: 8px 12px; font-size: 13px; border-radius: 8px; cursor: pointer; font-weight: bold;" title="Eliminar Plan de Viaje">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons for Plan de Viaje -->
+                    <div id="plan-viaje-actions" style="display: none; gap: 10px; flex-wrap: wrap;">
+                        <button id="btn-view-plan-viaje" style="flex: 1; min-width: 180px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 12px; font-size: 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+                            👁️ Ver Plan de Viaje
+                        </button>
+                        <button id="btn-send-plan-viaje-whatsapp" style="flex: 1; min-width: 180px; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; padding: 12px; font-size: 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                            💬 Enviar Plan de Viaje por WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- History Area (Hidden by default) -->
+        <div id="history-grid" class="workspace-grid" style="display: none;">
+            <div class="glass-card">
+                <div class="card-title-container" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 class="card-title">Historial de Convocatorias Guardadas</h2>
+                    <button id="btn-clear-all-history" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #FCA5A5; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Vaciar Historial</button>
+                </div>
+                <div id="history-list-container" style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- History cards will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Action buttons bar -->
+        <div id="actions-bar" class="actions-bar">
+            <button id="generate-pdf-btn" class="btn-action btn-pdf">
+                <span id="generate-pdf-spinner" class="spinner" style="display: none;"></span>
+                📄 <span id="generate-pdf-btn-text">Generar PDF Convocatoria</span>
+            </button>
+            <button id="send-whatsapp-btn" class="btn-action btn-whatsapp">
+                💬 Enviar por WhatsApp
+            </button>
+            <button id="save-history-btn" class="btn-action" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; box-shadow: 0 5px 20px rgba(59, 130, 246, 0.3);">
+                💾 Guardar Convocatoria
+            </button>
+        </div>
+    </div>
+
+    <!-- Script references -->
+    <script src="logo_base64.js"></script>
+    <script src="script.js?v=20260828_1035"></script>
+</body>
+</html>

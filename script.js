@@ -1,35 +1,3 @@
-// Immediate execution cleanup on file load
-(function autoCleanHistoryOnLoad() {
-    try {
-        localStorage.removeItem('laNuciaFS_drafts');
-        const deletedStr = localStorage.getItem('laNuciaFS_deletedHistoryIds');
-        let deleted = deletedStr ? JSON.parse(deletedStr) : [];
-        if (!Array.isArray(deleted)) deleted = [];
-        if (!deleted.includes('1787641678059')) deleted.push('1787641678059');
-        localStorage.setItem('laNuciaFS_deletedHistoryIds', JSON.stringify(deleted));
-
-        const historyStr = localStorage.getItem('laNuciaFS_history');
-        if (historyStr) {
-            let hist = JSON.parse(historyStr);
-            if (Array.isArray(hist)) {
-                const cleaned = hist.filter(h => {
-                    if (!h) return false;
-                    const idStr = String(h.id || '');
-                    if (deleted.includes(idStr)) return false;
-                    const combined = (String(h.rival || '') + ' ' + String(h.jornada || '')).toLowerCase();
-                    if (combined.includes('manresa') || combined.includes('covisa')) {
-                        if (idStr && !deleted.includes(idStr)) deleted.push(idStr);
-                        return false;
-                    }
-                    return true;
-                });
-                localStorage.setItem('laNuciaFS_history', JSON.stringify(cleaned));
-                localStorage.setItem('laNuciaFS_deletedHistoryIds', JSON.stringify(deleted));
-            }
-        }
-    } catch (e) {}
-})();
-
 // Database of Players for La Nucía FS
 const FIRST_TEAM_PLAYERS = [
     { id: '1-99', number: 99, name: 'Iván Cantó Reig', position: 'Portero', isGoalkeeper: true },
@@ -362,6 +330,110 @@ function loadTeamData(team) {
     }
     if (team === 'primer-equipo') {
         updatePlanViajeUI();
+    }
+
+    // Horarios y Paradas del Viaje (Filial y Juvenil)
+    const paradasCard = document.getElementById('paradas-viaje-card');
+    if (paradasCard) {
+        paradasCard.style.display = (team === 'filial' || team === 'juvenil') ? 'block' : 'none';
+    }
+    try {
+        const draftsStr = localStorage.getItem('laNuciaFS_drafts');
+        const drafts = draftsStr ? JSON.parse(draftsStr) : {};
+        setParadas(drafts[team]?.paradas || []);
+        activeLoadedHistoryId = drafts[team]?.activeLoadedHistoryId || null;
+        if (typeof updateEditingBanner === 'function') {
+            updateEditingBanner();
+        }
+    } catch (e) {
+        setParadas([]);
+        activeLoadedHistoryId = null;
+    }
+}
+
+// Horarios y Paradas del Viaje (Filial y Juvenil)
+function getParadas() {
+    const paradas = [];
+    for (let i = 1; i <= 5; i++) {
+        const time = document.getElementById(`input-parada-time-${i}`)?.value || '';
+        const name = document.getElementById(`input-parada-name-${i}`)?.value || '';
+        if (time.trim() || name.trim()) {
+            paradas.push({ time: time.trim(), name: name.trim() });
+        }
+    }
+    return paradas;
+}
+
+function setParadas(paradasList = []) {
+    for (let i = 1; i <= 5; i++) {
+        const item = paradasList[i - 1] || { time: '', name: '' };
+        const timeInput = document.getElementById(`input-parada-time-${i}`);
+        const nameInput = document.getElementById(`input-parada-name-${i}`);
+        if (timeInput) timeInput.value = item.time || '';
+        if (nameInput) nameInput.value = item.name || '';
+    }
+}
+
+function setupParadasListeners() {
+    const btnBenissa = document.getElementById('btn-route-benissa');
+    const btnVillajoyosa = document.getElementById('btn-route-villajoyosa');
+    const btnClear = document.getElementById('btn-clear-paradas');
+
+    if (btnBenissa) {
+        btnBenissa.addEventListener('click', () => {
+            setParadas([
+                { time: document.getElementById('input-parada-time-1')?.value || '', name: 'Salida Cementerio La Nucia' },
+                { time: document.getElementById('input-parada-time-2')?.value || '', name: 'Parada Repsol/Burger' },
+                { time: document.getElementById('input-parada-time-3')?.value || '', name: 'Parada Benissa' },
+                { time: document.getElementById('input-parada-time-4')?.value || '', name: 'Llegada al Pabellón' },
+                { time: '', name: '' }
+            ]);
+            saveCurrentTeamDraftToLocal();
+            if (typeof queueCloudSync === 'function') queueCloudSync();
+        });
+    }
+
+    if (btnVillajoyosa) {
+        btnVillajoyosa.addEventListener('click', () => {
+            setParadas([
+                { time: document.getElementById('input-parada-time-1')?.value || '', name: 'Salida Cementerio La Nucia' },
+                { time: document.getElementById('input-parada-time-2')?.value || '', name: 'Parada Repsol/Burger' },
+                { time: document.getElementById('input-parada-time-3')?.value || '', name: 'Autopista Villajoyosa' },
+                { time: document.getElementById('input-parada-time-4')?.value || '', name: 'Parada nueva' },
+                { time: document.getElementById('input-parada-time-5')?.value || '', name: 'Llegada al Pabellón' }
+            ]);
+            saveCurrentTeamDraftToLocal();
+            if (typeof queueCloudSync === 'function') queueCloudSync();
+        });
+    }
+
+    if (btnClear) {
+        btnClear.addEventListener('click', () => {
+            setParadas([]);
+            saveCurrentTeamDraftToLocal();
+            if (typeof queueCloudSync === 'function') queueCloudSync();
+        });
+    }
+
+    for (let i = 1; i <= 5; i++) {
+        const timeInput = document.getElementById(`input-parada-time-${i}`);
+        const nameInput = document.getElementById(`input-parada-name-${i}`);
+        if (timeInput) {
+            timeInput.addEventListener('change', () => {
+                saveCurrentTeamDraftToLocal();
+                if (typeof queueCloudSync === 'function') queueCloudSync();
+            });
+        }
+        if (nameInput) {
+            nameInput.addEventListener('input', () => {
+                saveCurrentTeamDraftToLocal();
+                if (typeof queueCloudSync === 'function') queueCloudSync();
+            });
+            nameInput.addEventListener('change', () => {
+                saveCurrentTeamDraftToLocal();
+                if (typeof queueCloudSync === 'function') queueCloudSync();
+            });
+        }
     }
 }
 
@@ -777,8 +849,16 @@ function setupSpeechRecognition() {
 function formatDateTimeString(val) {
     if (!val) return 'No especificado';
     const date = new Date(val);
-    const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
-    return date.toLocaleDateString('es-ES', options).replace(',', ' a las') + ' h';
+    if (isNaN(date.getTime())) return val;
+    const weekdays = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const weekday = weekdays[date.getDay()];
+    const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+    const day = date.getDate();
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const month = months[date.getMonth()];
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${capitalizedWeekday}, ${day} de ${month} a las ${hours}:${minutes} h`;
 }
 
 // Generate and export official PDF Convocatoria (100% reliable vector PDF engine)
@@ -799,6 +879,7 @@ function generatePDF() {
         const kitVal = document.getElementById('input-kit')?.value || '';
         const coachVal = document.getElementById('input-coach')?.value || '';
         const observationsVal = document.getElementById('input-observations')?.value || '';
+        const paradasList = getParadas();
 
         // Sort called players
         const calledPlayers = squadState.filter(p => p.isCalled).sort((a, b) => {
@@ -1124,6 +1205,20 @@ function generatePDF() {
             <div style="color: #333; font-style: italic;">${observationsVal}</div>
         </div>` : ''}
 
+        ${paradasList.length > 0 ? `
+        <div style="margin-bottom: 12px; background: #fff8f8; border: 1.5px solid #fecdd3; border-left: 5px solid #E30613; padding: 10px 14px; border-radius: 6px;">
+            <div style="font-weight: 800; font-size: 11px; color: #E30613; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                🚌 HORARIOS Y PARADAS DEL VIAJE (DESPLAZAMIENTO):
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                ${paradasList.map((p, idx) => `
+                <tr style="border-bottom: ${idx === paradasList.length - 1 ? 'none' : '1px solid #fee2e2'};">
+                    <td style="padding: 4px 6px; font-weight: 700; color: #E30613; width: 85px;">${p.time ? p.time + ' h' : '-'}</td>
+                    <td style="padding: 4px 6px; font-weight: 600; color: #1e293b;">📍 ${p.name || '-'}</td>
+                </tr>`).join('')}
+            </table>
+        </div>` : ''}
+
         <div style="margin-bottom: 12px;">
             <div class="section-title">JUGADORES CONVOCADOS (${calledPlayers.length})</div>
             <table class="player-table">
@@ -1267,6 +1362,15 @@ function sendWhatsApp() {
         text += `📝 *Observaciones:* ${observationsVal.trim()}\n`;
     }
 
+    const paradasList = getParadas();
+    if (paradasList.length > 0) {
+        text += `\n🚌 *HORARIOS Y PARADAS DEL VIAJE:*\n`;
+        paradasList.forEach(p => {
+            const timeStr = p.time ? `*${p.time} h*` : '';
+            text += `📍 ${timeStr ? timeStr + ' - ' : ''}${p.name}\n`;
+        });
+    }
+
     text += `\n📋 *JUGADORES CONVOCADOS:*\n`;
 
     const calledPlayers = squadState.filter(p => p.isCalled).sort((a, b) => {
@@ -1316,6 +1420,7 @@ function saveCurrentTeamDraftToLocal() {
     const existingPlanViaje = drafts[currentTeam]?.planViaje || null;
 
     drafts[currentTeam] = {
+        activeLoadedHistoryId: activeLoadedHistoryId || null,
         jornada: document.getElementById('input-jornada')?.value || '1',
         rival: document.getElementById('input-rival')?.value || '',
         schedule: document.getElementById('input-schedule')?.value || '',
@@ -1324,6 +1429,7 @@ function saveCurrentTeamDraftToLocal() {
         coach: document.getElementById('input-coach')?.value || '',
         kit: document.getElementById('input-kit')?.value || 'Primera Equipación',
         observations: document.getElementById('input-observations')?.value || '',
+        paradas: getParadas(),
         squadState: JSON.parse(JSON.stringify(squadState)),
         planViaje: existingPlanViaje
     };
@@ -1360,66 +1466,84 @@ async function fetchCloudData() {
     if (isSyncingCloud) return;
     try {
         isSyncingCloud = true;
-        const res = await fetch(CLOUD_SYNC_ENDPOINT, {
+        const res = await fetch(CLOUD_SYNC_ENDPOINT + `?_t=${Date.now()}`, {
             headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (!data) return;
+        if (!data || typeof data !== 'object') return;
 
-        // Sync & merge deleted history IDs across devices
+        // 1. Sync & merge deleted history IDs across devices
         const localDeleted = getDeletedHistoryIds();
         const cloudDeleted = Array.isArray(data.deletedHistoryIds) ? data.deletedHistoryIds.map(String) : [];
-        const mergedDeleted = Array.from(new Set([...localDeleted, ...cloudDeleted, '1787641678059']));
+        const mergedDeleted = Array.from(new Set([...localDeleted, ...cloudDeleted]));
         saveDeletedHistoryIds(mergedDeleted);
 
         const localSigs = getDeletedHistorySignatures();
         const cloudSigs = Array.isArray(data.deletedSignatures) ? data.deletedSignatures.map(String) : [];
-        const mergedSigs = Array.from(new Set([...localSigs, ...cloudSigs, 'manresa', 'covisa']));
+        const mergedSigs = Array.from(new Set([...localSigs, ...cloudSigs]));
         saveDeletedHistorySignatures(mergedSigs);
 
-        // Filter local and cloud histories using deleted IDs and permanent filters
+        // 2. Sync Custom Player Positions
+        if (data.customPositions && typeof data.customPositions === 'object') {
+            const currentLocalPositions = getCustomPositions();
+            const mergedPositions = { ...currentLocalPositions, ...data.customPositions };
+            localStorage.setItem('laNuciaFS_customPositions', JSON.stringify(mergedPositions));
+        }
+
+        // 3. Robust Two-way Union Merge for History
         const localHistory = getHistory();
         const rawCloudHistory = Array.isArray(data.history) ? data.history : [];
         const cloudHistory = rawCloudHistory.filter(cloudItem => !isDeletedOrForbiddenHistoryRecord(cloudItem));
 
-        // Auto-merge check: If this device has valid local history items that are NOT in the cloud, merge and push
-        const missingInCloud = localHistory.filter(localItem => 
-            !isDeletedOrForbiddenHistoryRecord(localItem) &&
-            !cloudHistory.some(cloudItem => String(cloudItem.id) === String(localItem.id) || 
-                (cloudItem.jornada === localItem.jornada && cloudItem.team === localItem.team && cloudItem.rival === localItem.rival))
-        );
-
-        if (missingInCloud.length > 0 || rawCloudHistory.length !== cloudHistory.length) {
-            const mergedHistory = [...cloudHistory, ...missingInCloud];
-            saveHistory(mergedHistory);
-            await pushCloudData();
-            if (document.getElementById('history-grid')?.style.display !== 'none') {
-                renderHistory();
+        const recordMap = new Map();
+        
+        // Add cloud records
+        cloudHistory.forEach(item => {
+            if (item && item.id && !isDeletedOrForbiddenHistoryRecord(item)) {
+                recordMap.set(String(item.id), item);
             }
-            return;
-        }
+        });
 
-        const cloudTimestamp = data.lastUpdated || 0;
-        if (cloudTimestamp > cloudLastUpdated) {
-            cloudLastUpdated = cloudTimestamp;
-
-            // Sync custom positions
-            if (data.customPositions && typeof data.customPositions === 'object') {
-                localStorage.setItem('laNuciaFS_customPositions', JSON.stringify(data.customPositions));
-            }
-
-            // Sync history
-            if (Array.isArray(data.history)) {
-                saveHistory(cloudHistory);
-                const historyGrid = document.getElementById('history-grid');
-                if (historyGrid && historyGrid.style.display !== 'none') {
-                    renderHistory();
+        // Add local records (without overwriting identical matches)
+        let localHadNew = false;
+        localHistory.forEach(item => {
+            if (item && item.id && !isDeletedOrForbiddenHistoryRecord(item)) {
+                const idStr = String(item.id);
+                if (!recordMap.has(idStr)) {
+                    const sig = `${item.team}__${item.jornada}__${item.rival}__${item.schedule}`.toLowerCase().trim();
+                    const existsBySig = Array.from(recordMap.values()).some(existing => 
+                        `${existing.team}__${existing.jornada}__${existing.rival}__${existing.schedule}`.toLowerCase().trim() === sig
+                    );
+                    if (!existsBySig) {
+                        recordMap.set(idStr, item);
+                        localHadNew = true;
+                    }
                 }
             }
+        });
 
-            updateCloudStatus('synced');
+        const mergedHistory = Array.from(recordMap.values());
+        mergedHistory.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        // Detect if local storage needs updating
+        const localIds = new Set(localHistory.map(h => String(h.id)));
+        const isLocalMissingItems = mergedHistory.some(h => !localIds.has(String(h.id)));
+
+        if (isLocalMissingItems || localHistory.length !== mergedHistory.length) {
+            saveHistory(mergedHistory);
+            renderHistory();
         }
+
+        // Detect if cloud storage needs updating
+        const cloudIds = new Set(cloudHistory.map(h => String(h.id)));
+        const isCloudMissingItems = mergedHistory.some(h => !cloudIds.has(String(h.id)));
+
+        if (isCloudMissingItems || localHadNew) {
+            await pushCloudData();
+        }
+
+        updateCloudStatus('synced');
     } catch (err) {
         console.warn('Error sincronizando con la nube:', err);
     } finally {
@@ -1486,81 +1610,55 @@ function startRealtimeSync() {
 }
 
 // Deleted History IDs Tracking & Guard
+const PROTECTED_HISTORY_RIVALS = ['dianense', 'nueva elda', 'elche 2012', 'ondarense', 'hercules', 'futsal ibi', 'manresa', 'covisa', 'valencia', 'calpe'];
+const PROTECTED_HISTORY_IDS = [
+    '1789673011189', '1789645601365', '1789513540061',
+    '1789023224973', '1788914254308', '1788534318089',
+    '1788219102000', '1788219101402', '1788219354121',
+    '1787654584407', '1787759494971', '1787644178551', '1787641678059'
+];
+
 function getDeletedHistoryIds() {
     try {
         const deletedStr = localStorage.getItem('laNuciaFS_deletedHistoryIds');
         const list = deletedStr ? JSON.parse(deletedStr) : [];
-        const result = Array.isArray(list) ? list.map(String) : [];
-        if (!result.includes('1787641678059')) {
-            result.push('1787641678059');
-        }
-        return result;
+        if (!Array.isArray(list)) return [];
+        // Never allow protected history IDs to be treated as deleted
+        return list.map(String).filter(id => !PROTECTED_HISTORY_IDS.includes(id));
     } catch (e) {
-        return ['1787641678059'];
+        return [];
     }
 }
 
 function saveDeletedHistoryIds(ids) {
     try {
-        const set = new Set(Array.isArray(ids) ? ids.map(String) : []);
-        set.add('1787641678059');
+        const cleanList = (Array.isArray(ids) ? ids : []).map(String).filter(id => !PROTECTED_HISTORY_IDS.includes(id));
+        const set = new Set(cleanList);
         localStorage.setItem('laNuciaFS_deletedHistoryIds', JSON.stringify(Array.from(set)));
     } catch (e) {}
 }
 
-// Deleted History Signatures Tracking
+// Deleted History Signatures Tracking (Purged for safety)
 function getDeletedHistorySignatures() {
-    try {
-        const str = localStorage.getItem('laNuciaFS_deletedSignatures');
-        const list = str ? JSON.parse(str) : [];
-        const result = Array.isArray(list) ? list.map(String) : [];
-        if (!result.includes('manresa')) result.push('manresa');
-        if (!result.includes('covisa')) result.push('covisa');
-        return result;
-    } catch(e) {
-        return ['manresa', 'covisa'];
-    }
+    return [];
 }
 
-function saveDeletedHistorySignatures(sigs) {
-    try {
-        const set = new Set(Array.isArray(sigs) ? sigs.map(String) : []);
-        set.add('manresa');
-        set.add('covisa');
-        localStorage.setItem('laNuciaFS_deletedSignatures', JSON.stringify(Array.from(set)));
-    } catch(e) {}
-}
+function saveDeletedHistorySignatures(sigs) {}
 
 function isDeletedOrForbiddenHistoryRecord(record) {
     if (!record || typeof record !== 'object') return true;
-    
     const idStr = String(record.id || '');
-    if (idStr === '1787641678059') return true;
+    if (!idStr || idStr === 'test-123' || record.team === 'test') return true;
     
+    // Explicitly protect official matches so they are NEVER filtered out
+    const rival = (record.rival || '').toLowerCase();
+    for (const safe of PROTECTED_HISTORY_RIVALS) {
+        if (rival.includes(safe)) return false;
+    }
+    if (PROTECTED_HISTORY_IDS.includes(idStr)) return false;
+
     const deletedIds = getDeletedHistoryIds();
-    if (idStr && deletedIds.includes(idStr)) return true;
-    
-    const rival = String(record.rival || '').toLowerCase();
-    const jornada = String(record.jornada || '').toLowerCase();
-    const combined = `${rival} ${jornada}`;
-    
-    if (combined.includes('manresa') || combined.includes('covisa')) {
-        if (idStr && !deletedIds.includes(idStr)) {
-            deletedIds.push(idStr);
-            saveDeletedHistoryIds(deletedIds);
-        }
-        return true;
-    }
-    
-    const signatures = getDeletedHistorySignatures();
-    const sig1 = `${record.team || ''}__${record.jornada || ''}__${record.rival || ''}`.toLowerCase();
-    for (const sig of signatures) {
-        if (sig && (sig1.includes(sig.toLowerCase()) || combined.includes(sig.toLowerCase()))) {
-            return true;
-        }
-    }
-    
-    return false;
+    return deletedIds.includes(idStr);
 }
 
 // History Management
@@ -1610,6 +1708,9 @@ function showToast(message, type = 'success') {
 }
 
 function resetWorkspaceToNew(team = currentTeam) {
+    activeLoadedHistoryId = null;
+    updateEditingBanner();
+
     // 1. Clear active draft in localStorage
     const draftsStr = localStorage.getItem('laNuciaFS_drafts');
     const drafts = draftsStr ? JSON.parse(draftsStr) : {};
@@ -1680,6 +1781,13 @@ function resetWorkspaceToNew(team = currentTeam) {
         updatePlanViajeUI();
     }
 
+    // Reset Horarios y Paradas del Viaje (Filial y Juvenil)
+    const paradasCard = document.getElementById('paradas-viaje-card');
+    if (paradasCard) {
+        paradasCard.style.display = (team === 'filial' || team === 'juvenil') ? 'block' : 'none';
+    }
+    setParadas([]);
+
     // 5. Clear voice transcripts / logs
     const voiceTranscript = document.getElementById('voice-transcript-output');
     if (voiceTranscript) voiceTranscript.value = '';
@@ -1699,51 +1807,139 @@ function resetWorkspaceToNew(team = currentTeam) {
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 }
 
-function saveCurrentToHistory() {
+let activeLoadedHistoryId = null;
+
+function updateEditingBanner() {
+    let banner = document.getElementById('editing-history-banner');
+    if (!activeLoadedHistoryId) {
+        if (banner) banner.style.display = 'none';
+        return;
+    }
+
+    const history = getHistory();
+    const record = history.find(h => String(h.id) === String(activeLoadedHistoryId));
+    if (!record) {
+        activeLoadedHistoryId = null;
+        if (banner) banner.style.display = 'none';
+        return;
+    }
+
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'editing-history-banner';
+        banner.style.cssText = 'background: rgba(37, 99, 235, 0.18); border: 1px solid rgba(59, 130, 246, 0.5); color: #93c5fd; padding: 12px 18px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        const workspaceGrid = document.getElementById('workspace-grid');
+        if (workspaceGrid && workspaceGrid.parentNode) {
+            workspaceGrid.parentNode.insertBefore(banner, workspaceGrid);
+        }
+    }
+
+    banner.style.display = 'flex';
+    banner.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">✏️</span>
+            <div>
+                <div style="font-weight: bold; color: #ffffff;">Modificando convocatoria: ${record.jornada} vs ${record.rival} (${record.schedule || 'Sin fecha'})</div>
+                <div style="font-size: 12px; color: #94a3b8;">Al pulsar "Guardar Convocatoria", se guardarán los cambios directamente en este partido sin generar uno nuevo.</div>
+            </div>
+        </div>
+        <button type="button" id="btn-cancel-edit-history" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: background 0.2s;">Guardar como nueva en su lugar</button>
+    `;
+
+    document.getElementById('btn-cancel-edit-history')?.addEventListener('click', () => {
+        activeLoadedHistoryId = null;
+        updateEditingBanner();
+        showToast('Desvinculado: al guardar se creará una convocatoria nueva.');
+    });
+}
+
+async function saveCurrentToHistory() {
     const jornadaVal = document.getElementById('input-jornada')?.options[document.getElementById('input-jornada').selectedIndex]?.text || 'Desconocida';
-    const rivalVal = document.getElementById('input-rival')?.value || 'Desconocido';
-    
-    const id = Date.now().toString();
-    
-    const record = {
-        id: id,
-        timestamp: Date.now(),
-        team: currentTeam,
-        jornada: jornadaVal,
-        rival: rivalVal,
-        schedule: document.getElementById('input-schedule')?.value || '',
-        callupTime: document.getElementById('input-callup-time')?.value || '',
-        venue: document.getElementById('input-venue')?.value || '',
-        coach: document.getElementById('input-coach')?.value || '',
-        kit: document.getElementById('input-kit')?.value || '',
-        observations: document.getElementById('input-observations')?.value || '',
-        squadState: JSON.parse(JSON.stringify(squadState))
-    };
+    const rivalVal = document.getElementById('input-rival')?.value.trim() || 'Desconocido';
+    const scheduleVal = document.getElementById('input-schedule')?.value || '';
     
     const history = getHistory();
     
-    // Check if there is already a record for the same team and jornada
-    const existingIndex = history.findIndex(h => h.jornada === jornadaVal && h.team === currentTeam);
+    // 1. Identify target record index
+    let existingIndex = -1;
     
-    if (existingIndex !== -1) {
-        record.id = history[existingIndex].id;
-        history[existingIndex] = record;
-    } else {
-        history.unshift(record);
+    // If loaded explicitly from history:
+    if (activeLoadedHistoryId) {
+        existingIndex = history.findIndex(h => String(h.id) === String(activeLoadedHistoryId));
     }
     
+    // If not loaded by ID, check if there's already an existing record for the exact same team and rival
+    if (existingIndex === -1 && rivalVal && rivalVal.toLowerCase() !== 'desconocido') {
+        existingIndex = history.findIndex(h => 
+            h.team === currentTeam && 
+            (h.rival || '').trim().toLowerCase() === rivalVal.toLowerCase()
+        );
+    }
+    
+    let record;
+    if (existingIndex !== -1) {
+        // OVERWRITE / UPDATE existing record! Keep its original ID and creation timestamp
+        record = {
+            ...history[existingIndex],
+            team: currentTeam,
+            jornada: jornadaVal,
+            rival: rivalVal,
+            schedule: scheduleVal,
+            callupTime: document.getElementById('input-callup-time')?.value || '',
+            venue: document.getElementById('input-venue')?.value || '',
+            coach: document.getElementById('input-coach')?.value || '',
+            kit: document.getElementById('input-kit')?.value || '',
+            observations: document.getElementById('input-observations')?.value || '',
+            paradas: getParadas(),
+            squadState: JSON.parse(JSON.stringify(squadState)),
+            updatedAt: Date.now()
+        };
+        history[existingIndex] = record;
+        activeLoadedHistoryId = String(record.id);
+    } else {
+        // Truly new record
+        const id = Date.now().toString();
+        record = {
+            id: id,
+            timestamp: Date.now(),
+            team: currentTeam,
+            jornada: jornadaVal,
+            rival: rivalVal,
+            schedule: scheduleVal,
+            callupTime: document.getElementById('input-callup-time')?.value || '',
+            venue: document.getElementById('input-venue')?.value || '',
+            coach: document.getElementById('input-coach')?.value || '',
+            kit: document.getElementById('input-kit')?.value || '',
+            observations: document.getElementById('input-observations')?.value || '',
+            paradas: getParadas(),
+            squadState: JSON.parse(JSON.stringify(squadState))
+        };
+        history.unshift(record);
+        activeLoadedHistoryId = String(record.id);
+    }
+    
+    // Ensure saved record ID is not in deletedHistoryIds
+    const cleanDel = getDeletedHistoryIds().filter(id => id !== String(record.id));
+    saveDeletedHistoryIds(cleanDel);
+
     saveHistory(history);
     renderHistory();
+    updateEditingBanner();
     
-    // Reset workspace to clean slate for the next convocatoria!
-    resetWorkspaceToNew(currentTeam);
+    // Push immediately to cloud and await confirmation
+    updateCloudStatus('syncing');
+    await pushCloudData();
     
-    showToast('✅ Convocatoria guardada en el historial. Panel listo para la siguiente.');
+    showToast(existingIndex !== -1 ? '✅ Convocatoria actualizada (cambios guardados).' : '✅ Convocatoria guardada en el historial y sincronizada.');
 }
 
-function deleteFromHistory(id) {
+async function deleteFromHistory(id) {
     if (confirm('¿Estás seguro de que deseas borrar este registro del historial?')) {
         const idStr = String(id || '');
+        if (activeLoadedHistoryId === idStr) {
+            activeLoadedHistoryId = null;
+            updateEditingBanner();
+        }
         const deletedIds = getDeletedHistoryIds();
         if (idStr && !deletedIds.includes(idStr)) {
             deletedIds.push(idStr);
@@ -1756,20 +1952,10 @@ function deleteFromHistory(id) {
             rawHistory = historyStr ? JSON.parse(historyStr) : [];
         } catch(e) {}
 
-        const targetItem = rawHistory.find(item => String(item?.id) === idStr);
-        if (targetItem) {
-            const sig = `${targetItem.team || ''}__${targetItem.jornada || ''}__${targetItem.rival || ''}`.toLowerCase();
-            const sigs = getDeletedHistorySignatures();
-            if (!sigs.includes(sig)) {
-                sigs.push(sig);
-                saveDeletedHistorySignatures(sigs);
-            }
-        }
-
-        const cleanHistory = rawHistory.filter(item => String(item?.id) !== idStr && !isDeletedOrForbiddenHistoryRecord(item));
+        const cleanHistory = rawHistory.filter(item => String(item?.id) !== idStr);
         saveHistory(cleanHistory);
         renderHistory();
-        pushCloudData();
+        await pushCloudData();
         showToast('Convocatoria eliminada correctamente.');
     }
 }
@@ -1853,10 +2039,22 @@ function loadFromHistory(id) {
     if (document.getElementById('input-kit')) document.getElementById('input-kit').value = record.kit;
     if (document.getElementById('input-observations')) document.getElementById('input-observations').value = record.observations;
     
+    // Toggle Paradas card and restore paradas
+    const paradasCard = document.getElementById('paradas-viaje-card');
+    if (paradasCard) {
+        paradasCard.style.display = (currentTeam === 'filial' || currentTeam === 'juvenil') ? 'block' : 'none';
+    }
+    setParadas(record.paradas || []);
+
     squadState = record.squadState;
     renderPlayerList();
     updateTacticalView();
+    activeLoadedHistoryId = String(record.id);
+    saveCurrentTeamDraftToLocal();
+    updateEditingBanner();
 }
+
+let historyFilterTeam = 'all';
 
 function renderHistory() {
     const container = document.getElementById('history-list-container');
@@ -1871,30 +2069,51 @@ function renderHistory() {
     }
     
     // Filter history based on role:
-    // - admin: only primer equipo records
     // - restricted: only filial + juvenil records
-    let filteredHistory = history;
+    // - admin / default: all saved convocatorias (Primer Equipo, Filial, Juvenil)
+    let baseHistory = history;
     if (userRole === 'restricted') {
-        filteredHistory = history.filter(record => record.team !== 'primer-equipo');
-        if (filteredHistory.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas para Filial o Juvenil.</div>';
-            return;
-        }
-    } else {
-        // admin sees only primer equipo history
-        filteredHistory = history.filter(record => record.team === 'primer-equipo');
-        if (filteredHistory.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas para el Primer Equipo.</div>';
-            return;
-        }
+        baseHistory = history.filter(record => record.team !== 'primer-equipo');
     }
-    
+
+    // Filter controls UI
+    const filterBar = document.createElement('div');
+    filterBar.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);';
+    filterBar.innerHTML = `
+        <span style="font-size: 12px; font-weight: bold; color: var(--text-muted);">Filtrar por equipo:</span>
+        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'all' ? 'active-filter' : ''}" data-team="all" style="background: ${historyFilterTeam === 'all' ? '#E30613' : 'rgba(255,255,255,0.08)'}; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Todos (${baseHistory.length})</button>
+        ${userRole !== 'restricted' ? `<button type="button" class="btn-filter-hist ${historyFilterTeam === 'primer-equipo' ? 'active-filter' : ''}" data-team="primer-equipo" style="background: ${historyFilterTeam === 'primer-equipo' ? '#dc2626' : 'rgba(239,68,68,0.15)'}; color: ${historyFilterTeam === 'primer-equipo' ? '#fff' : '#fca5a5'}; border: 1px solid rgba(239,68,68,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔴 1º Equipo (${baseHistory.filter(r => r.team === 'primer-equipo').length})</button>` : ''}
+        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'filial' ? 'active-filter' : ''}" data-team="filial" style="background: ${historyFilterTeam === 'filial' ? '#2563eb' : 'rgba(59,130,246,0.15)'}; color: ${historyFilterTeam === 'filial' ? '#fff' : '#93c5fd'}; border: 1px solid rgba(59,130,246,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔵 Filial (${baseHistory.filter(r => r.team === 'filial').length})</button>
+        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'juvenil' ? 'active-filter' : ''}" data-team="juvenil" style="background: ${historyFilterTeam === 'juvenil' ? '#d97706' : 'rgba(245,158,11,0.15)'}; color: ${historyFilterTeam === 'juvenil' ? '#fff' : '#fde68a'}; border: 1px solid rgba(245,158,11,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🟡 Juvenil (${baseHistory.filter(r => r.team === 'juvenil').length})</button>
+    `;
+    container.appendChild(filterBar);
+
+    filterBar.querySelectorAll('.btn-filter-hist').forEach(btn => {
+        btn.addEventListener('click', () => {
+            historyFilterTeam = btn.getAttribute('data-team');
+            renderHistory();
+        });
+    });
+
+    let filteredHistory = baseHistory;
+    if (historyFilterTeam !== 'all') {
+        filteredHistory = baseHistory.filter(r => r.team === historyFilterTeam);
+    }
+
+    if (filteredHistory.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = 'text-align: center; color: #64748b; padding: 20px;';
+        emptyMsg.innerText = 'No hay convocatorias guardadas para esta categoría.';
+        container.appendChild(emptyMsg);
+        return;
+    }
+
     filteredHistory.forEach(record => {
         const dateObj = new Date(record.timestamp);
         const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         const card = document.createElement('div');
-        card.style.cssText = 'border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; background: white; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);';
+        card.style.cssText = 'border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; background: white; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;';
         
         const header = document.createElement('div');
         header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; flex-wrap: wrap; gap: 8px;';
@@ -1944,8 +2163,8 @@ function renderHistory() {
         
         actions.appendChild(loadBtn);
         actions.appendChild(delBtn);
-        
         body.appendChild(actions);
+        
         card.appendChild(header);
         card.appendChild(body);
         container.appendChild(card);
@@ -2231,6 +2450,9 @@ function setupEventListeners() {
     const whatsappBtn = document.getElementById('send-whatsapp-btn');
     if (whatsappBtn) whatsappBtn.addEventListener('click', sendWhatsApp);
     
+    // Initialize Paradas listeners for Filial and Juvenil
+    setupParadasListeners();
+    
     const tabPrimerEquipo = document.getElementById('tab-primer-equipo');
     const tabFilial = document.getElementById('tab-filial');
     const tabJuvenil = document.getElementById('tab-juvenil');
@@ -2244,6 +2466,8 @@ function setupEventListeners() {
         tabPrimerEquipo.addEventListener('click', () => {
             saveCurrentTeamDraftToLocal();
             currentTeam = 'primer-equipo';
+            activeLoadedHistoryId = null;
+            updateEditingBanner();
             tabPrimerEquipo.classList.add('active');
             if (tabFilial) tabFilial.classList.remove('active');
             if (tabJuvenil) tabJuvenil.classList.remove('active');
@@ -2261,6 +2485,8 @@ function setupEventListeners() {
         tabFilial.addEventListener('click', () => {
             saveCurrentTeamDraftToLocal();
             currentTeam = 'filial';
+            activeLoadedHistoryId = null;
+            updateEditingBanner();
             tabFilial.classList.add('active');
             if (tabPrimerEquipo) tabPrimerEquipo.classList.remove('active');
             if (tabJuvenil) tabJuvenil.classList.remove('active');
@@ -2278,6 +2504,8 @@ function setupEventListeners() {
         tabJuvenil.addEventListener('click', () => {
             saveCurrentTeamDraftToLocal();
             currentTeam = 'juvenil';
+            activeLoadedHistoryId = null;
+            updateEditingBanner();
             tabJuvenil.classList.add('active');
             if (tabPrimerEquipo) tabPrimerEquipo.classList.remove('active');
             if (tabFilial) tabFilial.classList.remove('active');
@@ -2302,6 +2530,8 @@ function setupEventListeners() {
             if (actionsBar) actionsBar.style.display = 'none';
             if (historyGrid) historyGrid.style.display = 'grid';
             
+            // Set history filter strictly to current active team
+            historyFilterTeam = currentTeam || 'primer-equipo';
             renderHistory();
         });
     }
@@ -2401,6 +2631,31 @@ function setupEventListeners() {
     }
 }
 
+function startRealtimeSync() {
+    // Initial fetch
+    fetchCloudData();
+
+    // Poll every 4 seconds for instant multi-device sync
+    setInterval(() => {
+        fetchCloudData();
+    }, 4000);
+
+    // Sync on tab visibility / focus / online
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            fetchCloudData();
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        fetchCloudData();
+    });
+
+    window.addEventListener('online', () => {
+        fetchCloudData();
+    });
+}
+
 // Run app initialization when script loads
 function checkAuthAndInit() {
     userRole = localStorage.getItem('laNuciaFS_auth');
@@ -2426,9 +2681,12 @@ function checkAuthAndInit() {
         document.getElementById('tab-primer-equipo').classList.remove('active');
     }
     
-    initApp();
+    setupEventListeners();
+    loadTeamData(currentTeam);
+    startRealtimeSync();
+    renderHistory();
 }
-// One-time data migration: fix player names in saved history and purge deleted items
+// One-time data migration: clean local formatting safely without overwriting cloud
 function migrateHistoryPlayerNames() {
     const renames = [
         { from: 'Alberto Jose Madagascar Casanova', to: 'Alberto Madagascar Casanova' }
@@ -2436,38 +2694,12 @@ function migrateHistoryPlayerNames() {
     
     const historyStr = localStorage.getItem('laNuciaFS_history');
     if (!historyStr) return;
-    
-    let changed = false;
-    let history;
+    let history = [];
     try { history = JSON.parse(historyStr); } catch(e) { return; }
     if (!Array.isArray(history)) return;
     
-    const deletedIds = getDeletedHistoryIds();
-    const beforeCount = history.length;
-    history = history.filter(record => record && !deletedIds.includes(record.id) && !record.rival?.toLowerCase().includes('manresa'));
-    if (history.length !== beforeCount) {
-        changed = true;
-    }
-    
+    let changed = false;
     history.forEach(record => {
-        // Fix team attribution specifically:
-        // - Hercules San Vicente Sub-23 -> Juvenil
-        // - Hercules San Vicente 3ª -> Filial
-        if (record.rival) {
-            const rivalLower = record.rival.toLowerCase();
-            if ((rivalLower.includes('hercules') || rivalLower.includes('san vicente')) && (rivalLower.includes('sub 23') || rivalLower.includes('sub-23') || rivalLower.includes('sub23'))) {
-                if (record.team !== 'juvenil') {
-                    record.team = 'juvenil';
-                    changed = true;
-                }
-            } else if ((rivalLower.includes('hercules') || rivalLower.includes('san vicente')) && (rivalLower.includes('3ª') || rivalLower.includes('3a') || rivalLower.includes('tercera'))) {
-                if (record.team !== 'filial') {
-                    record.team = 'filial';
-                    changed = true;
-                }
-            }
-        }
-
         if (!record.squadState) return;
         record.squadState.forEach(player => {
             renames.forEach(r => {
@@ -2481,10 +2713,6 @@ function migrateHistoryPlayerNames() {
     
     if (changed) {
         saveHistory(history);
-        console.log('Historial actualizado: datos corregidos.');
-        if (typeof pushCloudData === 'function') {
-            pushCloudData();
-        }
     }
 }
 
@@ -2495,6 +2723,17 @@ if ('scrollRestoration' in history) {
 
 window.addEventListener('DOMContentLoaded', () => {
     window.scrollTo(0, 0);
+    try {
+        localStorage.removeItem('laNuciaFS_deletedSignatures');
+        const rawDel = localStorage.getItem('laNuciaFS_deletedHistoryIds');
+        if (rawDel) {
+            const parsed = JSON.parse(rawDel);
+            if (Array.isArray(parsed)) {
+                const cleaned = parsed.map(String).filter(id => !PROTECTED_HISTORY_IDS.includes(id));
+                localStorage.setItem('laNuciaFS_deletedHistoryIds', JSON.stringify(cleaned));
+            }
+        }
+    } catch(e) {}
     migrateHistoryPlayerNames();
     checkAuthAndInit();
 });

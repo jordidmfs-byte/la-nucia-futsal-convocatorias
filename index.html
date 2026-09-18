@@ -1125,6 +1125,100 @@
                 </div>
             </div>
 
+            <!-- Card 7: Horarios y Paradas del Viaje (Filial y Juvenil) -->
+            <div id="paradas-viaje-card" class="glass-card" style="display: none;">
+                <div class="card-title-container">
+                    <h2 class="card-title">🚌 Horarios y Paradas del Viaje (Desplazamiento)</h2>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.4;">
+                        Configura las horas y paradas de recogida para los partidos fuera de casa (hasta 4 paradas). Se incluirán automáticamente en la hoja de convocatoria oficial (PDF) y en el mensaje de WhatsApp.
+                    </p>
+
+                    <!-- Quick Route Presets -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: rgba(0,0,0,0.25); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--glass-border);">
+                        <span style="font-size: 12px; font-weight: bold; color: var(--text-muted);">Rutas rápidas:</span>
+                        <button type="button" id="btn-route-benissa" style="background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.45); color: #93c5fd; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                            📍 Ruta Benissa
+                        </button>
+                        <button type="button" id="btn-route-villajoyosa" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.45); color: #6ee7b7; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                            📍 Ruta Villajoyosa
+                        </button>
+                        <button type="button" id="btn-clear-paradas" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.45); color: #fca5a5; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                            🗑️ Limpiar
+                        </button>
+                    </div>
+
+                    <datalist id="paradas-datalist">
+                        <option value="Salida Cementerio La Nucia"></option>
+                        <option value="Parada Repsol/Burger"></option>
+                        <option value="Parada Benissa"></option>
+                        <option value="Autopista Villajoyosa"></option>
+                        <option value="Parada nueva"></option>
+                        <option value="Llegada al Pabellón"></option>
+                    </datalist>
+
+                    <!-- Grid of 5 stops -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.07);">
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Hora 1 (Salida)</label>
+                                <input type="time" id="input-parada-time-1" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Parada 1 (Punto de Salida)</label>
+                                <input type="text" id="input-parada-name-1" list="paradas-datalist" placeholder="Salida Cementerio La Nucia" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.07);">
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Hora 2</label>
+                                <input type="time" id="input-parada-time-2" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Parada 2</label>
+                                <input type="text" id="input-parada-name-2" list="paradas-datalist" placeholder="Parada Repsol/Burger" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.07);">
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Hora 3</label>
+                                <input type="time" id="input-parada-time-3" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Parada 3</label>
+                                <input type="text" id="input-parada-name-3" list="paradas-datalist" placeholder="Parada Benissa / Autopista Villajoyosa" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.07);">
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Hora 4</label>
+                                <input type="time" id="input-parada-time-4" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Parada 4</label>
+                                <input type="text" id="input-parada-name-4" list="paradas-datalist" placeholder="Parada nueva / Llegada al Pabellón" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.07);">
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Hora 5 (Llegada)</label>
+                                <input type="time" id="input-parada-time-5" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 2px;">Parada 5 (Llegada a Destino)</label>
+                                <input type="text" id="input-parada-name-5" list="paradas-datalist" placeholder="Llegada al Pabellón" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-light); font-size: 13px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- History Area (Hidden by default) -->

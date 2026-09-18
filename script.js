@@ -1,18 +1,18 @@
 // Database of Players for La Nucía FS
 const FIRST_TEAM_PLAYERS = [
-    { id: '1-99', number: 99, name: 'Iván Cantó Reig', position: 'Portero', isGoalkeeper: true },
-    { id: '1-88', number: 88, name: 'Josep Andreu García Rodríguez', position: 'Portero', isGoalkeeper: true },
-    { id: '1-11', number: 11, name: 'Abel Fernández Romero', position: 'Cierre', isGoalkeeper: false },
-    { id: '1-10', number: 10, name: 'Jorge Fernández Esteve', position: 'Cierre', isGoalkeeper: false },
-    { id: '1-98', number: 98, name: 'Jose Miralles Ríos', position: 'Ala zurdo', isGoalkeeper: false },
-    { id: '1-20', number: 20, name: 'Angel Trobo Pérez', position: 'Ala diestro', isGoalkeeper: false },
-    { id: '1-4', number: 4, name: 'Raul González Yuste', position: 'Ala/Pivot diestro', isGoalkeeper: false },
-    { id: '1-9', number: 9, name: 'Rachad Madi', position: 'Ala/Cierre zurdo', isGoalkeeper: false },
-    { id: '1-23', number: 23, name: 'Alejandro Espinosa Sabater', position: 'Ala pivot zurdo', isGoalkeeper: false },
-    { id: '1-7', number: 7, name: 'Manu Garcia Ruano', position: 'Ala diestro', isGoalkeeper: false },
-    { id: '1-8', number: 8, name: 'Sergio Lago Mayorga', position: 'Ala zurdo', isGoalkeeper: false },
-    { id: '1-21', number: 21, name: 'Julian De Diego García', position: 'Pivot zurdo', isGoalkeeper: false },
-    { id: '1-alcayde', number: 14, name: 'Manuel Alcayde', position: 'Ala diestro', isGoalkeeper: false },
+    { id: '1-99', number: 99, name: 'Iván Cantó Reig "Iván"', position: 'Portero', isGoalkeeper: true },
+    { id: '1-88', number: 88, name: 'Josep Andreu García Rodríguez "Pepe"', position: 'Portero', isGoalkeeper: true },
+    { id: '1-11', number: 11, name: 'Abel Fernández Romero "Abel"', position: 'Cierre', isGoalkeeper: false },
+    { id: '1-10', number: 10, name: 'Jorge Fernández Esteve "Jorge"', position: 'Cierre', isGoalkeeper: false },
+    { id: '1-98', number: 98, name: 'Jose Miralles Ríos "Jose"', position: 'Ala zurdo', isGoalkeeper: false },
+    { id: '1-20', number: 20, name: 'Angel Trobo Pérez "Trobo"', position: 'Ala diestro', isGoalkeeper: false },
+    { id: '1-4', number: 4, name: 'Raul González Yuste "Raúl"', position: 'Ala/Pivot diestro', isGoalkeeper: false },
+    { id: '1-9', number: 9, name: 'Rachad Madi "Madi"', position: 'Ala/Cierre zurdo', isGoalkeeper: false },
+    { id: '1-23', number: 23, name: 'Alejandro Espinosa Sabater "Espi"', position: 'Ala pivot zurdo', isGoalkeeper: false },
+    { id: '1-7', number: 7, name: 'Manu Garcia Ruano "Manu"', position: 'Ala diestro', isGoalkeeper: false },
+    { id: '1-8', number: 8, name: 'Sergio Lago Mayorga "Lago"', position: 'Ala zurdo', isGoalkeeper: false },
+    { id: '1-21', number: 21, name: 'Julian De Diego García "Juli"', position: 'Pivot zurdo', isGoalkeeper: false },
+    { id: '1-alcayde', number: 14, name: 'Manuel Alcayde "Manuel"', position: 'Ala diestro', isGoalkeeper: false },
     { id: '1-franz-monzo', number: '', name: 'Franz Esteban Monzo Cáceres', position: 'Ala zurdo', isGoalkeeper: false }
 ];
 
@@ -698,9 +698,11 @@ function updateTacticalView() {
         const dot = document.createElement('div');
         dot.className = `tactical-dot ${player.isGoalkeeper ? 'gk' : 'field'}`;
         dot.title = `${player.name} (${player.position})`;
+        const apodoMatch = player.name.match(/"([^"]+)"/);
+        const tacticalDisplayName = apodoMatch ? apodoMatch[1] : player.name.split(' ')[0];
         dot.innerHTML = `
             <span class="tactical-num">${player.number}</span>
-            <span class="tactical-name">${player.name.split(' ')[0]}</span>
+            <span class="tactical-name">${tacticalDisplayName}</span>
         `;
         
         if (player.isGoalkeeper) {
@@ -2689,7 +2691,21 @@ function checkAuthAndInit() {
 // One-time data migration: clean local formatting safely without overwriting cloud
 function migrateHistoryPlayerNames() {
     const renames = [
-        { from: 'Alberto Jose Madagascar Casanova', to: 'Alberto Madagascar Casanova' }
+        { from: 'Alberto Jose Madagascar Casanova', to: 'Alberto Madagascar Casanova' },
+        { from: 'Iván Cantó Reig', to: 'Iván Cantó Reig "Iván"' },
+        { from: 'Josep Andreu García Rodríguez', to: 'Josep Andreu García Rodríguez "Pepe"' },
+        { from: 'Abel Fernández Romero', to: 'Abel Fernández Romero "Abel"' },
+        { from: 'Jorge Fernández Esteve', to: 'Jorge Fernández Esteve "Jorge"' },
+        { from: 'Jose Miralles Ríos', to: 'Jose Miralles Ríos "Jose"' },
+        { from: 'Angel Trobo Pérez', to: 'Angel Trobo Pérez "Trobo"' },
+        { from: 'Angel Trobo Perez', to: 'Angel Trobo Pérez "Trobo"' },
+        { from: 'Raul González Yuste', to: 'Raul González Yuste "Raúl"' },
+        { from: 'Rachad Madi', to: 'Rachad Madi "Madi"' },
+        { from: 'Alejandro Espinosa Sabater', to: 'Alejandro Espinosa Sabater "Espi"' },
+        { from: 'Manu Garcia Ruano', to: 'Manu Garcia Ruano "Manu"' },
+        { from: 'Sergio Lago Mayorga', to: 'Sergio Lago Mayorga "Lago"' },
+        { from: 'Julian De Diego García', to: 'Julian De Diego García "Juli"' },
+        { from: 'Manuel Alcayde', to: 'Manuel Alcayde "Manuel"' }
     ];
     
     const historyStr = localStorage.getItem('laNuciaFS_history');
@@ -2708,7 +2724,7 @@ function migrateHistoryPlayerNames() {
                     changed = true;
                 }
             });
-            if (player.id === '1-alcayde' || player.name === 'Manuel Alcayde') {
+            if (player.id === '1-alcayde' || player.name.includes('Manuel Alcayde')) {
                 if (!player.number || player.number === '') {
                     player.number = 14;
                     changed = true;

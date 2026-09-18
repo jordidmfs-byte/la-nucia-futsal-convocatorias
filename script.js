@@ -42,27 +42,26 @@ const FILIAL_TEAM_PLAYERS = [
 ];
 
 const JUVENIL_TEAM_PLAYERS = [
-    { id: 'j-maml', number: '', name: 'Miguel Ángel Medina Lledó', position: 'Portero', isGoalkeeper: true },
-    { id: 'j-rzb', number: '', name: 'Raul Zaragoza Blasco', position: 'Portero', isGoalkeeper: true },
-    { id: 'j-src', number: '', name: 'Sebastián Ramírez Caballero', position: 'Portero', isGoalkeeper: true },
-    { id: 'j-avm', number: '', name: 'Angel Vargas Manzano', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-nma', number: '', name: 'Néstor Mesa Andreo', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-mpp', number: '', name: 'Marcos Pees Pérez', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-nsb', number: '', name: 'Nicolás Serrano Baides', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-arl', number: '', name: 'Aaron Robledillo Lozano', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-ots', number: '', name: 'Óscar Triguero Sánchez', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-jjpr', number: '', name: 'Juan Jose Parra Rojas', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-sme', number: '', name: 'Siam Monserrat Escobar', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-jsa', number: '', name: 'Jordi Serra Antolí', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-kf', number: '', name: 'Kelvin Fernandez', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-jp', number: '', name: 'José Perez', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-fs', number: '', name: 'Francesc Soriano', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-asg', number: '', name: 'Adrián Sanchis Garrido', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-ifc', number: '', name: 'Iker Fernandez Casellas', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-pvf', number: '', name: 'Pablo Vaello Fernandez', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-pmb', number: '', name: 'Pablo Martin Botia', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-msd', number: '', name: 'Marc Saval Dueñas', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'j-djg', number: '', name: 'Daniel Jose Galindez', position: 'Sin posición', isGoalkeeper: false }
+    { id: 'j-maml', number: 12, name: 'Miguel Ángel Medina Lledó', position: 'Portero', isGoalkeeper: true },
+    { id: 'j-avm', number: 11, name: 'Angel Vargas Manzano', position: 'Pivot zurdo', isGoalkeeper: false },
+    { id: 'j-nma', number: 5, name: 'Néstor Mesa Andreo', position: 'Ala zurdo', isGoalkeeper: false },
+    { id: 'j-mpp', number: 9, name: 'Marcos Pees Pérez', position: 'Ala diestro', isGoalkeeper: false },
+    { id: 'j-arl', number: '', name: 'Aaron Robledillo Lozano', position: 'Pivot diestro', isGoalkeeper: false },
+    { id: 'j-ots', number: 77, name: 'Óscar Triguero Sánchez', position: 'Ala diestro', isGoalkeeper: false },
+    { id: 'j-jjpr', number: 26, name: 'Juan Jose Parra Rojas', position: 'Ala zurdo', isGoalkeeper: false },
+    { id: 'j-sme', number: 22, name: 'Siam Monserrat Escobar', position: 'Cierre', isGoalkeeper: false },
+    { id: 'j-jsa', number: 18, name: 'Jordi Serra Antolí', position: 'Ala zurdo', isGoalkeeper: false },
+    { id: 'j-kf', number: '', name: 'Kelvin Fernandez', position: 'Pivot diestro', isGoalkeeper: false },
+    { id: 'j-jp', number: '', name: 'José Perez', position: 'Ala diestro', isGoalkeeper: false },
+    { id: 'j-fs', number: 16, name: 'Francesc Soriano (CS)', position: 'Ala diestro', isGoalkeeper: false },
+    { id: 'j-rzb', number: 34, name: 'Raul Zaragoza Blasco', position: 'Portero', isGoalkeeper: true },
+    { id: 'j-asg', number: 19, name: 'Adrián Sanchis Garrido', position: 'Pivot diestro', isGoalkeeper: false },
+    { id: 'j-ifc', number: 66, name: 'Iker Fernandez Casellas', position: 'Cierre', isGoalkeeper: false },
+    { id: 'j-pvf', number: 14, name: 'Pablo Vaello Fernandez', position: 'Cierre', isGoalkeeper: false },
+    { id: 'j-pmb', number: 88, name: 'Pablo Martin Botia', position: 'Pivot zurdo', isGoalkeeper: false },
+    { id: 'j-msd', number: 36, name: 'Marc Saval Dueñas', position: 'Ala diestro', isGoalkeeper: false },
+    { id: 'j-src', number: '', name: 'Sebastián Ramírez Caballero (CS)', position: 'Portero', isGoalkeeper: true },
+    { id: 'j-djg', number: '', name: 'Daniel Jose Galindez', position: 'Ala zurdo', isGoalkeeper: false }
 ];
 
 const FILIAL_OPPONENTS = [

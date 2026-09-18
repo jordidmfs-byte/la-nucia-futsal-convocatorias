@@ -19,7 +19,6 @@ const FIRST_TEAM_PLAYERS = [
 const FILIAL_TEAM_PLAYERS = [
     { id: 'f-13', number: 13, name: 'Hector Valero Rubio', position: 'Portero', isGoalkeeper: true },
     { id: 'f-12', number: 12, name: 'Mario Daniel Padilla Reyes', position: 'Portero', isGoalkeeper: true },
-    { id: 'f-jlhr', number: '', name: 'Jose Luis Heredia Ruiz', position: 'Portero', isGoalkeeper: true },
     { id: 'f-daa', number: '', name: 'Diego Agustin Aguilar', position: 'Portero', isGoalkeeper: true },
     { id: 'f-23', number: 23, name: 'Sergio Juarez Sanchez', position: 'Cierre', isGoalkeeper: false },
     { id: 'f-10', number: 10, name: 'Joan Manuel Misa Giarrusso', position: 'Cierre', isGoalkeeper: false },
@@ -28,17 +27,13 @@ const FILIAL_TEAM_PLAYERS = [
     { id: 'f-34-m', number: 34, name: 'Alberto Madagascar Casanova', position: 'Cierre', isGoalkeeper: false },
     { id: 'f-11', number: 11, name: 'Antonio Cortes Ruiz', position: 'Ala', isGoalkeeper: false },
     { id: 'f-42', number: 42, name: 'Alvaro Roma Suarez', position: 'Ala', isGoalkeeper: false },
-    { id: 'f-16', number: 16, name: 'Franz Esteban Monzon Caceres', position: 'Ala', isGoalkeeper: false },
     { id: 'f-slm', number: '', name: 'Sergio Lago Mayorga', position: 'Ala zurdo', isGoalkeeper: false },
     { id: 'f-jlrbh', number: '', name: 'Jose Luis Ruiz Ben Hamu', position: 'Sin posición', isGoalkeeper: false },
     { id: 'f-atp', number: '', name: 'Angel Trobo Perez', position: 'Ala diestro', isGoalkeeper: false },
-    { id: 'f-wj', number: '', name: 'Wilker Jimenez', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'f-jc', number: '', name: 'Jose Cordova', position: 'Sin posición', isGoalkeeper: false },
     { id: 'f-7', number: 7, name: 'Victor Manzaneda Gadea', position: 'Pivot', isGoalkeeper: false },
     { id: 'f-6', number: 6, name: 'Demetrio Pozo Fernandez', position: 'Pivot', isGoalkeeper: false },
     { id: 'f-ejbr', number: '', name: 'Eduardo José Boye Ricardo', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'f-2', number: 2, name: 'Ibrahim Gaye Gaye', position: 'Pivot', isGoalkeeper: false },
-    { id: 'f-rpa', number: '', name: 'Raul Perles Ausias', position: 'Sin posición', isGoalkeeper: false }
+    { id: 'f-2', number: 2, name: 'Ibrahim Gaye Gaye', position: 'Pivot', isGoalkeeper: false }
 ];
 
 const JUVENIL_TEAM_PLAYERS = [

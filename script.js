@@ -12,7 +12,7 @@ const FIRST_TEAM_PLAYERS = [
     { id: '1-7', number: 7, name: 'Manu Garcia Ruano', position: 'Ala diestro', isGoalkeeper: false },
     { id: '1-8', number: 8, name: 'Sergio Lago Mayorga', position: 'Ala zurdo', isGoalkeeper: false },
     { id: '1-21', number: 21, name: 'Julian De Diego García', position: 'Pivot zurdo', isGoalkeeper: false },
-    { id: '1-alcayde', number: '', name: 'Manuel Alcayde', position: 'Ala diestro', isGoalkeeper: false },
+    { id: '1-alcayde', number: 14, name: 'Manuel Alcayde', position: 'Ala diestro', isGoalkeeper: false },
     { id: '1-franz-monzo', number: '', name: 'Franz Esteban Monzo Cáceres', position: 'Ala zurdo', isGoalkeeper: false }
 ];
 
@@ -2708,6 +2708,12 @@ function migrateHistoryPlayerNames() {
                     changed = true;
                 }
             });
+            if (player.id === '1-alcayde' || player.name === 'Manuel Alcayde') {
+                if (!player.number || player.number === '') {
+                    player.number = 14;
+                    changed = true;
+                }
+            }
         });
     });
     

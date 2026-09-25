@@ -2436,12 +2436,16 @@ function setupEventListeners() {
         }
     });
 
-    ['input-venue', 'input-kit'].forEach(fieldId => {
-        const el = document.getElementById(fieldId);
-        if (el) {
-            el.addEventListener('change', queueCloudSync);
-        }
-    });
+    const venueEl = document.getElementById('input-venue');
+    if (venueEl) {
+        venueEl.addEventListener('change', queueCloudSync);
+        venueEl.addEventListener('input', queueCloudSync);
+    }
+
+    const kitEl = document.getElementById('input-kit');
+    if (kitEl) {
+        kitEl.addEventListener('change', queueCloudSync);
+    }
 
     const whatsappBtn = document.getElementById('send-whatsapp-btn');
     if (whatsappBtn) whatsappBtn.addEventListener('click', sendWhatsApp);

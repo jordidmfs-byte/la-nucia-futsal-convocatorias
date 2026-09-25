@@ -975,12 +975,12 @@
                     </div>
                     <div class="form-group">
                         <label for="input-venue">Instalación / Pabellón</label>
-                        <select id="input-venue">
-                            <option value="Pabellón Camilo Cano">Pabellón Camilo Cano</option>
-                            <option value="Pabellón Muixara">Pabellón Muixara</option>
-                            <option value="Pabellón Benidorm">Pabellón Benidorm</option>
-                            <option value="Pabellón Rival">Pabellón Rival</option>
-                        </select>
+                        <input type="text" id="input-venue" placeholder="Escribe o selecciona pabellón..." list="venue-datalist" autocomplete="off">
+                        <datalist id="venue-datalist">
+                            <option value="Pabellón Camilo Cano"></option>
+                            <option value="Pabellón Muixara"></option>
+                            <option value="Pabellón Benidorm"></option>
+                        </datalist>
                     </div>
                     <div class="form-group">
                         <label for="input-schedule">Fecha y Hora</label>

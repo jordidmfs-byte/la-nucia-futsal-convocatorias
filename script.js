@@ -13,6 +13,7 @@ const FIRST_TEAM_PLAYERS = [
     { id: '1-8', number: 8, name: 'Sergio Lago Mayorga "Lago"', position: 'Ala zurdo', isGoalkeeper: false },
     { id: '1-21', number: 21, name: 'Julian De Diego García "Juli"', position: 'Pivot zurdo', isGoalkeeper: false },
     { id: '1-alcayde', number: 14, name: 'Manuel Alcayde "Manuel"', position: 'Ala diestro', isGoalkeeper: false },
+    { id: '1-19', number: 19, name: 'Omar Molines Arranz "Omar"', position: 'Ala diestro', isGoalkeeper: false },
     { id: '1-franz-monzo', number: '', name: 'Franz Esteban Monzo Cáceres', position: 'Ala zurdo', isGoalkeeper: false }
 ];
 

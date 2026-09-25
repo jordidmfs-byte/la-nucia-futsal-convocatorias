@@ -20,6 +20,7 @@ const FIRST_TEAM_PLAYERS = [
 const FILIAL_TEAM_PLAYERS = [
     { id: 'f-13', number: 13, name: 'Hector Valero Rubio', position: 'Portero', isGoalkeeper: true },
     { id: 'f-12', number: 12, name: 'Mario Daniel Padilla Reyes', position: 'Portero', isGoalkeeper: true },
+    { id: 'f-jlhr', number: '', name: 'Jose Luis Heredia Ruiz', position: 'Portero', isGoalkeeper: true },
     { id: 'f-daa', number: '', name: 'Diego Agustin Aguilar', position: 'Portero', isGoalkeeper: true },
     { id: 'f-23', number: 23, name: 'Sergio Juarez Sanchez', position: 'Cierre', isGoalkeeper: false },
     { id: 'f-10', number: 10, name: 'Joan Manuel Misa Giarrusso', position: 'Cierre', isGoalkeeper: false },
@@ -42,7 +43,6 @@ const JUVENIL_TEAM_PLAYERS = [
     { id: 'j-avm', number: 11, name: 'Angel Vargas Manzano', position: 'Pivot zurdo', isGoalkeeper: false },
     { id: 'j-nma', number: 5, name: 'Néstor Mesa Andreo', position: 'Ala zurdo', isGoalkeeper: false },
     { id: 'j-mpp', number: 9, name: 'Marcos Pees Pérez', position: 'Ala diestro', isGoalkeeper: false },
-    { id: 'j-arl', number: '', name: 'Aaron Robledillo Lozano', position: 'Pivot diestro', isGoalkeeper: false },
     { id: 'j-ots', number: 77, name: 'Óscar Triguero Sánchez', position: 'Ala diestro', isGoalkeeper: false },
     { id: 'j-jjpr', number: 26, name: 'Juan Jose Parra Rojas', position: 'Ala zurdo', isGoalkeeper: false },
     { id: 'j-sme', number: 22, name: 'Siam Monserrat Escobar', position: 'Cierre', isGoalkeeper: false },

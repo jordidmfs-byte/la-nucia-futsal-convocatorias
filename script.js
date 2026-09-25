@@ -232,6 +232,12 @@ function loadTeamData(team) {
     
     // Configurar desplegable de jornadas
     populateJornadaDropdown(team);
+
+    // Toggle visualización de Equipo Rival (SOLO en Primer Equipo se oculta, ya que viene indicado en la jornada)
+    const rivalGroup = document.getElementById('form-group-rival');
+    if (rivalGroup) {
+        rivalGroup.style.display = (team === 'primer-equipo') ? 'none' : '';
+    }
     
     // Poblar datalist de rivales con rivales extra añadidos
     const rivalDatalist = document.getElementById('rival-datalist');
@@ -869,7 +875,13 @@ function generatePDF() {
     try {
         // Collect form values from the main app
         const jornadaVal = document.getElementById('input-jornada')?.options[document.getElementById('input-jornada').selectedIndex]?.text || '';
-        const rivalVal = document.getElementById('input-rival')?.value || '';
+        let rivalVal = document.getElementById('input-rival')?.value || '';
+        if (!rivalVal && currentTeam === 'primer-equipo') {
+            const jVal = document.getElementById('input-jornada')?.value;
+            const cal = PRIMER_EQUIPO_CALENDAR.find(c => String(c.jornada) === String(jVal));
+            if (cal) rivalVal = cal.rival;
+            else if (jVal === 'Supercopa' || jVal === 'Amistoso') rivalVal = jVal;
+        }
         const scheduleVal = formatDateTimeString(document.getElementById('input-schedule')?.value);
         const callupTimeVal = document.getElementById('input-callup-time')?.value || '';
         const venueVal = document.getElementById('input-venue')?.value || '';
@@ -1346,8 +1358,11 @@ function sendWhatsApp() {
     };
     const teamTitle = teamTitleMap[currentTeam] || '1º EQUIPO';
 
-    let text = `🔴⚫ *CONVOCATORIA ${teamTitle} - LA NUCÍA FS* 🔴⚫\n\n`;
-    text += `⚽ *Competición / Jornada:* ${jornadaVal}${rivalVal ? ' vs *' + rivalVal + '*' : ''}\n`;
+    if (currentTeam === 'primer-equipo') {
+        text += `⚽ *Competición / Jornada:* ${jornadaVal}\n`;
+    } else {
+        text += `⚽ *Competición / Jornada:* ${jornadaVal}${rivalVal ? ' vs *' + rivalVal + '*' : ''}\n`;
+    }
     text += `📅 *Fecha y Hora:* ${scheduleVal}\n`;
     if (callupTimeVal) {
         text += `⏰ *Hora de Convocatoria:* ${callupTimeVal} h\n`;
@@ -1416,10 +1431,18 @@ function saveCurrentTeamDraftToLocal() {
     
     const existingPlanViaje = drafts[currentTeam]?.planViaje || null;
 
+    let draftRival = document.getElementById('input-rival')?.value || '';
+    if (!draftRival && currentTeam === 'primer-equipo') {
+        const jVal = document.getElementById('input-jornada')?.value;
+        const cal = PRIMER_EQUIPO_CALENDAR.find(c => String(c.jornada) === String(jVal));
+        if (cal) draftRival = cal.rival;
+        else if (jVal === 'Supercopa' || jVal === 'Amistoso') draftRival = jVal;
+    }
+
     drafts[currentTeam] = {
         activeLoadedHistoryId: activeLoadedHistoryId || null,
         jornada: document.getElementById('input-jornada')?.value || '1',
-        rival: document.getElementById('input-rival')?.value || '',
+        rival: draftRival,
         schedule: document.getElementById('input-schedule')?.value || '',
         callupTime: document.getElementById('input-callup-time')?.value || '',
         venue: document.getElementById('input-venue')?.value || 'Pabellón Camilo Cano',
@@ -1852,7 +1875,19 @@ function updateEditingBanner() {
 
 async function saveCurrentToHistory() {
     const jornadaVal = document.getElementById('input-jornada')?.options[document.getElementById('input-jornada').selectedIndex]?.text || 'Desconocida';
-    const rivalVal = document.getElementById('input-rival')?.value.trim() || 'Desconocido';
+    let rivalVal = document.getElementById('input-rival')?.value.trim() || '';
+    if (!rivalVal && currentTeam === 'primer-equipo') {
+        const jVal = document.getElementById('input-jornada')?.value;
+        const cal = PRIMER_EQUIPO_CALENDAR.find(c => String(c.jornada) === String(jVal));
+        if (cal) {
+            rivalVal = cal.rival;
+            if (document.getElementById('input-rival')) document.getElementById('input-rival').value = cal.rival;
+        } else if (jVal === 'Supercopa' || jVal === 'Amistoso') {
+            rivalVal = jVal;
+            if (document.getElementById('input-rival')) document.getElementById('input-rival').value = jVal;
+        }
+    }
+    if (!rivalVal) rivalVal = 'Desconocido';
     const scheduleVal = document.getElementById('input-schedule')?.value || '';
     
     const history = getHistory();
@@ -2036,6 +2071,12 @@ function loadFromHistory(id) {
     if (document.getElementById('input-kit')) document.getElementById('input-kit').value = record.kit;
     if (document.getElementById('input-observations')) document.getElementById('input-observations').value = record.observations;
     
+    // Toggle visualización de Equipo Rival (SOLO en Primer Equipo se oculta)
+    const rivalGroup = document.getElementById('form-group-rival');
+    if (rivalGroup) {
+        rivalGroup.style.display = (currentTeam === 'primer-equipo') ? 'none' : '';
+    }
+
     // Toggle Paradas card and restore paradas
     const paradasCard = document.getElementById('paradas-viaje-card');
     if (paradasCard) {
@@ -2394,8 +2435,18 @@ function setupEventListeners() {
         jornadaSelect.addEventListener('change', () => {
             if (currentTeam === 'primer-equipo') {
                 const val = jornadaSelect.value;
-                if (!val || val === 'Supercopa' || val === 'Amistoso') {
+                if (!val) {
                     document.getElementById('input-rival').value = '';
+                    document.getElementById('input-schedule').value = '';
+                    document.getElementById('input-callup-time').value = '';
+                    document.getElementById('input-venue').value = 'Pabellón Camilo Cano';
+                } else if (val === 'Supercopa') {
+                    document.getElementById('input-rival').value = 'Supercopa';
+                    document.getElementById('input-schedule').value = '';
+                    document.getElementById('input-callup-time').value = '';
+                    document.getElementById('input-venue').value = 'Pabellón Camilo Cano';
+                } else if (val === 'Amistoso') {
+                    document.getElementById('input-rival').value = 'Amistoso';
                     document.getElementById('input-schedule').value = '';
                     document.getElementById('input-callup-time').value = '';
                     document.getElementById('input-venue').value = 'Pabellón Camilo Cano';

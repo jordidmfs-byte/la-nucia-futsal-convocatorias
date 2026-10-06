@@ -284,10 +284,7 @@ function loadTeamData(team) {
         });
         
         const searchContainer = document.getElementById('guest-search-container');
-        if (searchContainer) searchContainer.style.display = 'flex';
-        const searchLabel = document.getElementById('label-guest-search');
-        if (searchLabel) searchLabel.innerText = 'Añadir Jugador (Filial o Juvenil)';
-        populateGuestDropdownToAdd();
+        if (searchContainer) searchContainer.style.display = 'none';
     } else if (team === 'filial') {
         if (document.getElementById('input-coach')) document.getElementById('input-coach').value = 'Jona';
         FILIAL_TEAM_PLAYERS.forEach(player => {
@@ -864,6 +861,10 @@ function formatDateTimeString(val) {
     return `${capitalizedWeekday}, ${day} de ${month} a las ${hours}:${minutes} h`;
 }
 
+// Global reference to last generated PDF document
+let lastGeneratedFolioHTML = '';
+let lastFolioBlobUrl = null;
+
 // Generate and export official PDF Convocatoria (100% reliable vector PDF engine)
 function generatePDF(targetWindow = null) {
     const btnText = document.getElementById('generate-pdf-btn-text');
@@ -1303,7 +1304,60 @@ function generatePDF(targetWindow = null) {
 </body>
 </html>`;
 
-        // 1. Always open and display the in-app PDF Preview Modal (guaranteed to never be blocked by browser popup blockers)
+        lastGeneratedFolioHTML = folioHTML;
+
+        let blobUrl = null;
+        try {
+            const blob = new Blob([folioHTML], { type: 'text/html;charset=utf-8' });
+            blobUrl = URL.createObjectURL(blob);
+            lastFolioBlobUrl = blobUrl;
+        } catch (e) {
+            console.error('Error creando Blob URL del PDF:', e);
+        }
+
+        // Open/navigate target window to Blob URL or document.write
+        let windowOpened = false;
+        if (targetWindow && !targetWindow.closed) {
+            try {
+                if (blobUrl) {
+                    targetWindow.location.href = blobUrl;
+                } else {
+                    targetWindow.document.open();
+                    targetWindow.document.write(folioHTML);
+                    targetWindow.document.close();
+                }
+                targetWindow.focus();
+                windowOpened = true;
+            } catch (err) {
+                console.warn('Error navegando targetWindow con location.href:', err);
+                try {
+                    targetWindow.document.open();
+                    targetWindow.document.write(folioHTML);
+                    targetWindow.document.close();
+                    targetWindow.focus();
+                    windowOpened = true;
+                } catch(e2) {}
+            }
+        }
+
+        if (!windowOpened) {
+            try {
+                const newWin = window.open(blobUrl || '', '_blank');
+                if (newWin) {
+                    if (!blobUrl) {
+                        newWin.document.open();
+                        newWin.document.write(folioHTML);
+                        newWin.document.close();
+                    }
+                    newWin.focus();
+                    windowOpened = true;
+                }
+            } catch (e3) {
+                console.warn('window.open bloqueado por el navegador:', e3);
+            }
+        }
+
+        // Preload preview iframe as backup
         const previewOverlay = document.getElementById('pdf-preview-overlay');
         const previewIframe = document.getElementById('pdf-preview-iframe');
         const modalTitle = document.getElementById('pdf-modal-title');
@@ -1313,38 +1367,21 @@ function generatePDF(targetWindow = null) {
         }
 
         if (previewIframe) {
-            const frameDoc = previewIframe.contentWindow ? previewIframe.contentWindow.document : previewIframe.contentDocument;
-            if (frameDoc) {
-                frameDoc.open();
-                frameDoc.write(folioHTML);
-                frameDoc.close();
-            }
+            try {
+                const frameDoc = previewIframe.contentWindow ? previewIframe.contentWindow.document : previewIframe.contentDocument;
+                if (frameDoc) {
+                    frameDoc.open();
+                    frameDoc.write(folioHTML);
+                    frameDoc.close();
+                }
+            } catch(e4) {}
         }
 
-        if (previewOverlay) {
+        // If window could not open (popup blocked by browser), show the in-app modal
+        if (!windowOpened && previewOverlay) {
             previewOverlay.style.display = 'flex';
-        }
-
-        // 2. Also attempt to open/populate the separate tab if permitted
-        try {
-            const printWin = targetWindow && !targetWindow.closed ? targetWindow : window.open('', '_blank');
-            if (printWin) {
-                printWin.document.open();
-                printWin.document.write(folioHTML);
-                printWin.document.close();
-                try { printWin.focus(); } catch (e) {}
-            } else if (previewIframe && previewIframe.contentWindow) {
-                setTimeout(() => {
-                    try { previewIframe.contentWindow.print(); } catch(e) {}
-                }, 400);
-            }
-        } catch (popErr) {
-            console.log('Ventana emergente bloqueada, visualizando en visor integrado:', popErr);
-            if (previewIframe && previewIframe.contentWindow) {
-                setTimeout(() => {
-                    try { previewIframe.contentWindow.print(); } catch(e) {}
-                }, 400);
-            }
+        } else if (previewOverlay) {
+            previewOverlay.style.display = 'none';
         }
 
         if (btnText) btnText.innerText = 'Guardar y generar PDF convocatoria';
@@ -2063,15 +2100,12 @@ function loadFromHistory(id, skipConfirm = false) {
         
         const searchContainer = document.getElementById('guest-search-container');
         const searchLabel = document.getElementById('label-guest-search');
-        if (searchContainer && searchLabel) {
-            if (currentTeam === 'primer-equipo') {
-                searchContainer.style.display = 'flex';
-                searchLabel.innerText = 'Añadir Jugador (Filial o Juvenil)';
+        if (searchContainer) {
+            if (currentTeam === 'primer-equipo' || currentTeam === 'juvenil') {
+                searchContainer.style.display = 'none';
             } else if (currentTeam === 'filial') {
                 searchContainer.style.display = 'flex';
-                searchLabel.innerText = 'Añadir Jugador (Juvenil)';
-            } else {
-                searchContainer.style.display = 'none';
+                if (searchLabel) searchLabel.innerText = 'Añadir Jugador (Juvenil)';
             }
         }
     }
@@ -2130,36 +2164,59 @@ function renderHistory() {
     const history = getHistory().filter(record => !isDeletedOrForbiddenHistoryRecord(record));
     container.innerHTML = '';
     
-    if (history.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas.</div>';
+    const isPrimerEquipo = (userRole === 'primer-equipo' || currentTeam === 'primer-equipo');
+    
+    let baseHistory = history;
+    if (isPrimerEquipo) {
+        // En Primer Equipo, NO sale ni filial ni juvenil ni el historial de estos
+        baseHistory = history.filter(r => r.team === 'primer-equipo');
+    } else if (userRole === 'filial') {
+        baseHistory = history.filter(r => r.team === 'filial' || r.team === 'juvenil');
+    } else if (userRole === 'juvenil') {
+        baseHistory = history.filter(r => r.team === 'juvenil');
+    }
+
+    if (baseHistory.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas${isPrimerEquipo ? ' del Primer Equipo' : ''}.</div>`;
         return;
     }
-    
-    // Base history includes all saved convocatorias across all categories
-    let baseHistory = history;
-
-    // Filter controls UI
-    const filterBar = document.createElement('div');
-    filterBar.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);';
-    filterBar.innerHTML = `
-        <span style="font-size: 12px; font-weight: bold; color: var(--text-muted);">Filtrar por equipo:</span>
-        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'all' ? 'active-filter' : ''}" data-team="all" style="background: ${historyFilterTeam === 'all' ? '#E30613' : 'rgba(255,255,255,0.08)'}; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Todos (${baseHistory.length})</button>
-        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'primer-equipo' ? 'active-filter' : ''}" data-team="primer-equipo" style="background: ${historyFilterTeam === 'primer-equipo' ? '#dc2626' : 'rgba(239,68,68,0.15)'}; color: ${historyFilterTeam === 'primer-equipo' ? '#fff' : '#fca5a5'}; border: 1px solid rgba(239,68,68,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔴 1º Equipo (${baseHistory.filter(r => r.team === 'primer-equipo').length})</button>
-        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'filial' ? 'active-filter' : ''}" data-team="filial" style="background: ${historyFilterTeam === 'filial' ? '#2563eb' : 'rgba(59,130,246,0.15)'}; color: ${historyFilterTeam === 'filial' ? '#fff' : '#93c5fd'}; border: 1px solid rgba(59,130,246,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔵 Filial (${baseHistory.filter(r => r.team === 'filial').length})</button>
-        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'juvenil' ? 'active-filter' : ''}" data-team="juvenil" style="background: ${historyFilterTeam === 'juvenil' ? '#d97706' : 'rgba(245,158,11,0.15)'}; color: ${historyFilterTeam === 'juvenil' ? '#fff' : '#fde68a'}; border: 1px solid rgba(245,158,11,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🟡 Juvenil (${baseHistory.filter(r => r.team === 'juvenil').length})</button>
-    `;
-    container.appendChild(filterBar);
-
-    filterBar.querySelectorAll('.btn-filter-hist').forEach(btn => {
-        btn.addEventListener('click', () => {
-            historyFilterTeam = btn.getAttribute('data-team');
-            renderHistory();
-        });
-    });
 
     let filteredHistory = baseHistory;
-    if (historyFilterTeam !== 'all') {
-        filteredHistory = baseHistory.filter(r => r.team === historyFilterTeam);
+
+    if (isPrimerEquipo) {
+        // En Primer Equipo no mostramos botones ni registros de filial o juvenil
+        const titleBadge = document.createElement('div');
+        titleBadge.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 10px 14px; background: rgba(227,6,19,0.12); border: 1px solid rgba(227,6,19,0.3); border-radius: 8px;';
+        titleBadge.innerHTML = `<div style="font-size: 13px; font-weight: 700; color: #fca5a5; display: flex; align-items: center; gap: 8px;"><span>🔴</span> Historial Oficial - Primer Equipo (${baseHistory.length} convocatorias)</div>`;
+        container.appendChild(titleBadge);
+    } else {
+        // Filter controls UI para coordinadores / filial
+        const filterBar = document.createElement('div');
+        filterBar.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);';
+        
+        let buttonsHtml = `<span style="font-size: 12px; font-weight: bold; color: var(--text-muted);">Filtrar por equipo:</span>
+            <button type="button" class="btn-filter-hist ${historyFilterTeam === 'all' ? 'active-filter' : ''}" data-team="all" style="background: ${historyFilterTeam === 'all' ? '#E30613' : 'rgba(255,255,255,0.08)'}; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Todos (${baseHistory.length})</button>`;
+        
+        if (userRole !== 'filial') {
+            buttonsHtml += `<button type="button" class="btn-filter-hist ${historyFilterTeam === 'primer-equipo' ? 'active-filter' : ''}" data-team="primer-equipo" style="background: ${historyFilterTeam === 'primer-equipo' ? '#dc2626' : 'rgba(239,68,68,0.15)'}; color: ${historyFilterTeam === 'primer-equipo' ? '#fff' : '#fca5a5'}; border: 1px solid rgba(239,68,68,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔴 1º Equipo (${baseHistory.filter(r => r.team === 'primer-equipo').length})</button>`;
+        }
+        buttonsHtml += `
+            <button type="button" class="btn-filter-hist ${historyFilterTeam === 'filial' ? 'active-filter' : ''}" data-team="filial" style="background: ${historyFilterTeam === 'filial' ? '#2563eb' : 'rgba(59,130,246,0.15)'}; color: ${historyFilterTeam === 'filial' ? '#fff' : '#93c5fd'}; border: 1px solid rgba(59,130,246,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔵 Filial (${baseHistory.filter(r => r.team === 'filial').length})</button>
+            <button type="button" class="btn-filter-hist ${historyFilterTeam === 'juvenil' ? 'active-filter' : ''}" data-team="juvenil" style="background: ${historyFilterTeam === 'juvenil' ? '#d97706' : 'rgba(245,158,11,0.15)'}; color: ${historyFilterTeam === 'juvenil' ? '#fff' : '#fde68a'}; border: 1px solid rgba(245,158,11,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🟡 Juvenil (${baseHistory.filter(r => r.team === 'juvenil').length})</button>
+        `;
+        filterBar.innerHTML = buttonsHtml;
+        container.appendChild(filterBar);
+
+        filterBar.querySelectorAll('.btn-filter-hist').forEach(btn => {
+            btn.addEventListener('click', () => {
+                historyFilterTeam = btn.getAttribute('data-team');
+                renderHistory();
+            });
+        });
+
+        if (historyFilterTeam !== 'all') {
+            filteredHistory = baseHistory.filter(r => r.team === historyFilterTeam);
+        }
     }
 
     if (filteredHistory.length === 0) {
@@ -2394,18 +2451,23 @@ async function sendPlanViajeWhatsApp() {
 function setupEventListeners() {
     const generatePdfBtn = document.getElementById('generate-pdf-btn');
     if (generatePdfBtn) {
-        generatePdfBtn.addEventListener('click', async () => {
-            // Pre-open window synchronously to prevent mobile/desktop popup blockers from blocking it after async cloud sync
-            const preOpenedWin = window.open('', '_blank');
-            if (preOpenedWin) {
-                preOpenedWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Generando PDF Convocatoria...</title><style>body{background:#0f172a;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}</style></head><body><div style="text-align:center;"><h2>⚽ Guardando convocatoria y preparando PDF...</h2><p style="color:#94a3b8;">Por favor espera un segundo...</p></div></body></html>');
-            }
+        generatePdfBtn.addEventListener('click', () => {
+            // 1. Pre-open window synchronously to defeat popup blockers
+            let targetWin = null;
             try {
-                await saveCurrentToHistory();
+                targetWin = window.open('about:blank', '_blank');
+                if (targetWin) {
+                    targetWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cargando PDF Convocatoria...</title><style>body{background:#0f172a;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}h2{margin-bottom:8px;}p{color:#94a3b8;margin:0;}</style></head><body><div><h2>⚽ Guardando convocatoria...</h2><p>Preparando documento oficial...</p></div></body></html>');
+                }
             } catch (e) {
-                console.error('Error guardando en historial:', e);
+                console.warn('No se pudo pre-abrir ventana emergente:', e);
             }
-            generatePDF(preOpenedWin);
+            
+            // 2. Save current convocatoria to history immediately (sync local save + cloud push in background)
+            saveCurrentToHistory().catch(e => console.error('Error guardando en historial:', e));
+
+            // 3. Generate PDF and navigate target window immediately
+            generatePDF(targetWin);
         });
     }
 
@@ -2620,8 +2682,11 @@ function setupEventListeners() {
             if (actionsBar) actionsBar.style.display = 'none';
             if (historyGrid) historyGrid.style.display = 'grid';
             
-            // Mostrar todas las convocatorias guardadas por defecto para que nada quede oculto
-            historyFilterTeam = 'all';
+            if (userRole === 'primer-equipo' || currentTeam === 'primer-equipo') {
+                historyFilterTeam = 'primer-equipo';
+            } else {
+                historyFilterTeam = 'all';
+            }
             renderHistory();
         });
     }
@@ -2666,12 +2731,18 @@ function setupEventListeners() {
     
     if (btnLogin && inputPassword) {
         const attemptLogin = () => {
-            const pass = inputPassword.value;
-            if (pass === PASS_ADMIN) {
-                localStorage.setItem('laNuciaFS_auth', 'admin');
+            const pass = (inputPassword.value || '').trim().toLowerCase();
+            if (pass === PASS_ADMIN || pass === 'primerequipo' || pass === '1') {
+                localStorage.setItem('laNuciaFS_auth', 'primer-equipo');
                 window.location.reload();
-            } else if (pass === PASS_RESTRICTED) {
-                localStorage.setItem('laNuciaFS_auth', 'restricted');
+            } else if (pass === PASS_RESTRICTED || pass === '2') {
+                localStorage.setItem('laNuciaFS_auth', 'filial');
+                window.location.reload();
+            } else if (pass === 'juvenil' || pass === '3') {
+                localStorage.setItem('laNuciaFS_auth', 'juvenil');
+                window.location.reload();
+            } else if (pass === 'admin' || pass === 'club' || pass === 'coordinador') {
+                localStorage.setItem('laNuciaFS_auth', 'admin');
                 window.location.reload();
             } else {
                 if (loginError) loginError.style.display = 'block';
@@ -2737,6 +2808,24 @@ function setupEventListeners() {
     const btnPrintModalPdf = document.getElementById('btn-print-modal-pdf');
     if (btnPrintModalPdf) {
         btnPrintModalPdf.addEventListener('click', () => {
+            if (lastFolioBlobUrl) {
+                const w = window.open(lastFolioBlobUrl, '_blank');
+                if (w) {
+                    w.focus();
+                    return;
+                }
+            }
+            if (lastGeneratedFolioHTML) {
+                try {
+                    const blob = new Blob([lastGeneratedFolioHTML], { type: 'text/html;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const w = window.open(url, '_blank');
+                    if (w) {
+                        w.focus();
+                        return;
+                    }
+                } catch(e) {}
+            }
             const previewIframe = document.getElementById('pdf-preview-iframe');
             if (previewIframe && previewIframe.contentWindow) {
                 previewIframe.contentWindow.focus();
@@ -2775,6 +2864,17 @@ function startRealtimeSync() {
 function checkAuthAndInit() {
     userRole = localStorage.getItem('laNuciaFS_auth');
     
+    // Automatically migrate legacy 'admin' (which was granted by typing 'lanucia') to 'primer-equipo'
+    if (userRole === 'admin') {
+        userRole = 'primer-equipo';
+        localStorage.setItem('laNuciaFS_auth', 'primer-equipo');
+    }
+    // Migrate legacy 'restricted' to 'filial'
+    if (userRole === 'restricted') {
+        userRole = 'filial';
+        localStorage.setItem('laNuciaFS_auth', 'filial');
+    }
+
     if (!userRole) {
         // Show login, hide app
         document.getElementById('login-overlay').style.display = 'flex';
@@ -2786,14 +2886,43 @@ function checkAuthAndInit() {
     // User is authenticated
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('main-app-container').style.display = 'block';
-    
-    if (userRole === 'restricted') {
-        const tabPrimerEquipo = document.getElementById('tab-primer-equipo');
+
+    const tabPrimerEquipo = document.getElementById('tab-primer-equipo');
+    const tabFilial = document.getElementById('tab-filial');
+    const tabJuvenil = document.getElementById('tab-juvenil');
+    const tabHistorial = document.getElementById('tab-historial');
+
+    if (userRole === 'primer-equipo') {
+        // En Primer Equipo, NO sale ni filial ni juvenil ni el historial de estos
+        if (tabFilial) tabFilial.style.display = 'none';
+        if (tabJuvenil) tabJuvenil.style.display = 'none';
+        if (tabPrimerEquipo) {
+            tabPrimerEquipo.style.display = 'inline-block';
+            tabPrimerEquipo.classList.add('active');
+        }
+        if (tabHistorial) {
+            tabHistorial.style.display = 'inline-block';
+            tabHistorial.classList.remove('active');
+        }
+        currentTeam = 'primer-equipo';
+    } else if (userRole === 'filial') {
         if (tabPrimerEquipo) tabPrimerEquipo.style.display = 'none';
-        
+        if (tabFilial) {
+            tabFilial.style.display = 'inline-block';
+            tabFilial.classList.add('active');
+        }
+        if (tabJuvenil) tabJuvenil.style.display = 'inline-block';
+        if (tabPrimerEquipo) tabPrimerEquipo.classList.remove('active');
         currentTeam = 'filial';
-        document.getElementById('tab-filial').classList.add('active');
-        document.getElementById('tab-primer-equipo').classList.remove('active');
+    } else if (userRole === 'juvenil') {
+        if (tabPrimerEquipo) tabPrimerEquipo.style.display = 'none';
+        if (tabFilial) tabFilial.style.display = 'none';
+        if (tabJuvenil) {
+            tabJuvenil.style.display = 'inline-block';
+            tabJuvenil.classList.add('active');
+        }
+        if (tabPrimerEquipo) tabPrimerEquipo.classList.remove('active');
+        currentTeam = 'juvenil';
     }
     
     setupEventListeners();

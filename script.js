@@ -1638,6 +1638,8 @@ const PROTECTED_HISTORY_RIVALS = [
     'canet', 'hospitalet', 'bellsport', 'castelldefels', 'serelles', 'paidos', 'castalla'
 ];
 const PROTECTED_HISTORY_IDS = [
+    '1790900000001',
+    '1790900000002',
     '1790326565400',
     '1790288466127',
     '1789673011189', '1789645601365', '1789513540061',

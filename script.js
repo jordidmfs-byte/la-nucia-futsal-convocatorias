@@ -2170,12 +2170,13 @@ function renderHistory() {
     const history = getHistory().filter(record => !isDeletedOrForbiddenHistoryRecord(record));
     container.innerHTML = '';
     
-    const isPrimerEquipo = (userRole === 'primer-equipo' || currentTeam === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil'));
+    // Check if in Primer Equipo mode (any non-restricted session or active primer-equipo)
+    const isPrimerEquipo = (currentTeam === 'primer-equipo' || userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil'));
     
     let baseHistory = history;
     if (isPrimerEquipo) {
         // En Primer Equipo, NO sale ni filial ni juvenil ni el historial de estos
-        baseHistory = history.filter(r => r.team === 'primer-equipo');
+        baseHistory = history.filter(r => r.team === 'primer-equipo' && r.team !== 'filial' && r.team !== 'juvenil');
     } else if (userRole === 'filial') {
         baseHistory = history.filter(r => r.team === 'filial' || r.team === 'juvenil');
     } else if (userRole === 'juvenil') {
@@ -2187,13 +2188,13 @@ function renderHistory() {
         return;
     }
 
-    let filteredHistory = isPrimerEquipo ? baseHistory.filter(r => r.team === 'primer-equipo') : baseHistory;
+    let filteredHistory = isPrimerEquipo ? baseHistory.filter(r => r.team === 'primer-equipo' && r.team !== 'filial' && r.team !== 'juvenil') : baseHistory;
 
     if (isPrimerEquipo) {
-        // En Primer Equipo no mostramos botones ni registros de filial o juvenil
+        // En Primer Equipo nunca mostramos botones ni registros de filial o juvenil
         const titleBadge = document.createElement('div');
         titleBadge.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 10px 14px; background: rgba(227,6,19,0.12); border: 1px solid rgba(227,6,19,0.3); border-radius: 8px;';
-        titleBadge.innerHTML = `<div style="font-size: 13px; font-weight: 700; color: #fca5a5; display: flex; align-items: center; gap: 8px;"><span>🔴</span> Historial Oficial - Primer Equipo (${baseHistory.length} convocatorias)</div>`;
+        titleBadge.innerHTML = `<div style="font-size: 13px; font-weight: 700; color: #fca5a5; display: flex; align-items: center; gap: 8px;"><span>🔴</span> Historial Oficial - Primer Equipo (${filteredHistory.length} convocatorias)</div>`;
         container.appendChild(titleBadge);
     } else {
         // Filter controls UI para coordinadores / filial
@@ -2234,6 +2235,10 @@ function renderHistory() {
     }
 
     filteredHistory.forEach(record => {
+        // Double-check failsafe: In Primer Equipo mode, NEVER render filial or juvenil records
+        if (isPrimerEquipo && (record.team === 'filial' || record.team === 'juvenil' || record.team !== 'primer-equipo')) {
+            return;
+        }
         const dateObj = new Date(record.timestamp);
         const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         

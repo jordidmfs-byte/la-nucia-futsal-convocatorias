@@ -973,8 +973,8 @@
                 </div>
                 <div class="team-tabs" style="justify-content: center; flex-wrap: wrap;">
                     <button id="tab-primer-equipo" class="tab-btn active">Primer Equipo</button>
-                    <button id="tab-filial" class="tab-btn">Filial</button>
-                    <button id="tab-juvenil" class="tab-btn">Juvenil</button>
+                    <button id="tab-filial" class="tab-btn" style="display: none;">Filial</button>
+                    <button id="tab-juvenil" class="tab-btn" style="display: none;">Juvenil</button>
                     <button id="tab-historial" class="tab-btn">Historial convocatorias</button>
                 </div>
             </div>
@@ -1019,7 +1019,7 @@
                         <input type="time" id="input-callup-time">
                     </div>
                     <div class="form-group" id="guest-search-container">
-                        <label id="label-guest-search" for="input-guest-search">Añadir Jugador Invitado</label>
+                        <label id="label-guest-search" for="input-guest-search">Añadir Jugador (Filial o Juvenil)</label>
                         <div style="display: flex; gap: 8px;">
                             <input type="text" id="input-guest-search" list="guest-datalist" placeholder="Buscar jugador..." autocomplete="off">
                             <datalist id="guest-datalist"></datalist>
@@ -1276,6 +1276,6 @@
 
     <!-- Script references -->
     <script src="logo_base64.js"></script>
-    <script src="script.js?v=20261006_1325"></script>
+    <script src="script.js?v=20261006_1335"></script>
 </body>
 </html>

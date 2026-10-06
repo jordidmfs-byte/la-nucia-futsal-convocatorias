@@ -284,7 +284,10 @@ function loadTeamData(team) {
         });
         
         const searchContainer = document.getElementById('guest-search-container');
-        if (searchContainer) searchContainer.style.display = 'none';
+        if (searchContainer) searchContainer.style.display = 'flex';
+        const searchLabel = document.getElementById('label-guest-search');
+        if (searchLabel) searchLabel.innerText = 'Añadir Jugador (Filial o Juvenil)';
+        populateGuestDropdownToAdd();
     } else if (team === 'filial') {
         if (document.getElementById('input-coach')) document.getElementById('input-coach').value = 'Jona';
         FILIAL_TEAM_PLAYERS.forEach(player => {
@@ -2101,11 +2104,14 @@ function loadFromHistory(id, skipConfirm = false) {
         const searchContainer = document.getElementById('guest-search-container');
         const searchLabel = document.getElementById('label-guest-search');
         if (searchContainer) {
-            if (currentTeam === 'primer-equipo' || currentTeam === 'juvenil') {
-                searchContainer.style.display = 'none';
+            if (currentTeam === 'primer-equipo') {
+                searchContainer.style.display = 'flex';
+                if (searchLabel) searchLabel.innerText = 'Añadir Jugador (Filial o Juvenil)';
             } else if (currentTeam === 'filial') {
                 searchContainer.style.display = 'flex';
                 if (searchLabel) searchLabel.innerText = 'Añadir Jugador (Juvenil)';
+            } else {
+                searchContainer.style.display = 'none';
             }
         }
     }
@@ -2164,7 +2170,7 @@ function renderHistory() {
     const history = getHistory().filter(record => !isDeletedOrForbiddenHistoryRecord(record));
     container.innerHTML = '';
     
-    const isPrimerEquipo = (userRole === 'primer-equipo' || currentTeam === 'primer-equipo');
+    const isPrimerEquipo = (userRole === 'primer-equipo' || currentTeam === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil'));
     
     let baseHistory = history;
     if (isPrimerEquipo) {
@@ -2181,7 +2187,7 @@ function renderHistory() {
         return;
     }
 
-    let filteredHistory = baseHistory;
+    let filteredHistory = isPrimerEquipo ? baseHistory.filter(r => r.team === 'primer-equipo') : baseHistory;
 
     if (isPrimerEquipo) {
         // En Primer Equipo no mostramos botones ni registros de filial o juvenil
@@ -2621,8 +2627,14 @@ function setupEventListeners() {
             activeLoadedHistoryId = null;
             updateEditingBanner();
             tabPrimerEquipo.classList.add('active');
-            if (tabFilial) tabFilial.classList.remove('active');
-            if (tabJuvenil) tabJuvenil.classList.remove('active');
+            if (tabFilial) {
+                tabFilial.classList.remove('active');
+                if (userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil')) tabFilial.style.display = 'none';
+            }
+            if (tabJuvenil) {
+                tabJuvenil.classList.remove('active');
+                if (userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil')) tabJuvenil.style.display = 'none';
+            }
             if (tabHistorial) tabHistorial.classList.remove('active');
             
             if (workspaceGrid) workspaceGrid.style.display = 'grid';
@@ -2675,8 +2687,14 @@ function setupEventListeners() {
         tabHistorial.addEventListener('click', () => {
             tabHistorial.classList.add('active');
             if (tabPrimerEquipo) tabPrimerEquipo.classList.remove('active');
-            if (tabFilial) tabFilial.classList.remove('active');
-            if (tabJuvenil) tabJuvenil.classList.remove('active');
+            if (tabFilial) {
+                tabFilial.classList.remove('active');
+                if (userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil')) tabFilial.style.display = 'none';
+            }
+            if (tabJuvenil) {
+                tabJuvenil.classList.remove('active');
+                if (userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil')) tabJuvenil.style.display = 'none';
+            }
             
             if (workspaceGrid) workspaceGrid.style.display = 'none';
             if (actionsBar) actionsBar.style.display = 'none';
@@ -2734,15 +2752,21 @@ function setupEventListeners() {
             const pass = (inputPassword.value || '').trim().toLowerCase();
             if (pass === PASS_ADMIN || pass === 'primerequipo' || pass === '1') {
                 localStorage.setItem('laNuciaFS_auth', 'primer-equipo');
+                userRole = 'primer-equipo';
+                currentTeam = 'primer-equipo';
+                checkAuthAndInit();
                 window.location.reload();
             } else if (pass === PASS_RESTRICTED || pass === '2') {
                 localStorage.setItem('laNuciaFS_auth', 'filial');
+                userRole = 'filial';
+                currentTeam = 'filial';
+                checkAuthAndInit();
                 window.location.reload();
             } else if (pass === 'juvenil' || pass === '3') {
                 localStorage.setItem('laNuciaFS_auth', 'juvenil');
-                window.location.reload();
-            } else if (pass === 'admin' || pass === 'club' || pass === 'coordinador') {
-                localStorage.setItem('laNuciaFS_auth', 'admin');
+                userRole = 'juvenil';
+                currentTeam = 'juvenil';
+                checkAuthAndInit();
                 window.location.reload();
             } else {
                 if (loginError) loginError.style.display = 'block';
@@ -2864,15 +2888,10 @@ function startRealtimeSync() {
 function checkAuthAndInit() {
     userRole = localStorage.getItem('laNuciaFS_auth');
     
-    // Automatically migrate legacy 'admin' (which was granted by typing 'lanucia') to 'primer-equipo'
-    if (userRole === 'admin') {
+    // Automatically migrate any session other than 'filial' or 'juvenil' to 'primer-equipo'
+    if (userRole && userRole !== 'filial' && userRole !== 'juvenil') {
         userRole = 'primer-equipo';
         localStorage.setItem('laNuciaFS_auth', 'primer-equipo');
-    }
-    // Migrate legacy 'restricted' to 'filial'
-    if (userRole === 'restricted') {
-        userRole = 'filial';
-        localStorage.setItem('laNuciaFS_auth', 'filial');
     }
 
     if (!userRole) {

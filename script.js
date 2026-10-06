@@ -869,8 +869,8 @@ function generatePDF() {
     const btnText = document.getElementById('generate-pdf-btn-text');
     const spinner = document.getElementById('generate-pdf-spinner');
     
-    btnText.innerText = 'Abriendo PDF Convocatoria...';
-    spinner.style.display = 'inline-block';
+    if (btnText) btnText.innerText = 'Guardando y abriendo PDF...';
+    if (spinner) spinner.style.display = 'inline-block';
     
     try {
         // Collect form values from the main app
@@ -1328,15 +1328,15 @@ function generatePDF() {
             }, 400);
         }
 
-        btnText.innerText = 'Generar PDF Convocatoria';
-        spinner.style.display = 'none';
+        if (btnText) btnText.innerText = 'Guardar y generar PDF convocatoria';
+        if (spinner) spinner.style.display = 'none';
 
     } catch (err) {
         console.error('Error abriendo PDF:', err);
-        btnText.innerText = 'Error al generar PDF';
-        spinner.style.display = 'none';
+        if (btnText) btnText.innerText = 'Error al generar PDF';
+        if (spinner) spinner.style.display = 'none';
         setTimeout(() => {
-            btnText.innerText = 'Generar PDF Convocatoria';
+            if (btnText) btnText.innerText = 'Guardar y generar PDF convocatoria';
         }, 3000);
     }
 }
@@ -2372,7 +2372,12 @@ async function sendPlanViajeWhatsApp() {
 // Event Listeners setup
 function setupEventListeners() {
     const generatePdfBtn = document.getElementById('generate-pdf-btn');
-    if (generatePdfBtn) generatePdfBtn.addEventListener('click', generatePDF);
+    if (generatePdfBtn) {
+        generatePdfBtn.addEventListener('click', async () => {
+            await saveCurrentToHistory();
+            generatePDF();
+        });
+    }
 
     // Plan de Viaje Event Listeners (Primer Equipo)
     const btnUploadPlan = document.getElementById('btn-upload-plan-viaje');

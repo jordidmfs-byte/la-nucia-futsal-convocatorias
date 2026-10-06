@@ -1303,30 +1303,48 @@ function generatePDF(targetWindow = null) {
 </body>
 </html>`;
 
-        const printWin = targetWindow && !targetWindow.closed ? targetWindow : window.open('', '_blank');
-        if (printWin) {
-            printWin.document.open();
-            printWin.document.write(folioHTML);
-            printWin.document.close();
-            try { printWin.focus(); } catch (e) {}
-        } else {
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'fixed';
-            iframe.style.right = '0';
-            iframe.style.bottom = '0';
-            iframe.style.width = '0';
-            iframe.style.height = '0';
-            iframe.style.border = '0';
-            document.body.appendChild(iframe);
-            const doc = iframe.contentWindow.document;
-            doc.open();
-            doc.write(folioHTML);
-            doc.close();
-            iframe.contentWindow.focus();
-            setTimeout(() => {
-                iframe.contentWindow.print();
-                setTimeout(() => { if (iframe.parentNode) document.body.removeChild(iframe); }, 3000);
-            }, 400);
+        // 1. Always open and display the in-app PDF Preview Modal (guaranteed to never be blocked by browser popup blockers)
+        const previewOverlay = document.getElementById('pdf-preview-overlay');
+        const previewIframe = document.getElementById('pdf-preview-iframe');
+        const modalTitle = document.getElementById('pdf-modal-title');
+        
+        if (modalTitle) {
+            modalTitle.innerText = `Vista Previa: ${teamName} - ${jornadaVal} vs ${rivalVal}`;
+        }
+
+        if (previewIframe) {
+            const frameDoc = previewIframe.contentWindow ? previewIframe.contentWindow.document : previewIframe.contentDocument;
+            if (frameDoc) {
+                frameDoc.open();
+                frameDoc.write(folioHTML);
+                frameDoc.close();
+            }
+        }
+
+        if (previewOverlay) {
+            previewOverlay.style.display = 'flex';
+        }
+
+        // 2. Also attempt to open/populate the separate tab if permitted
+        try {
+            const printWin = targetWindow && !targetWindow.closed ? targetWindow : window.open('', '_blank');
+            if (printWin) {
+                printWin.document.open();
+                printWin.document.write(folioHTML);
+                printWin.document.close();
+                try { printWin.focus(); } catch (e) {}
+            } else if (previewIframe && previewIframe.contentWindow) {
+                setTimeout(() => {
+                    try { previewIframe.contentWindow.print(); } catch(e) {}
+                }, 400);
+            }
+        } catch (popErr) {
+            console.log('Ventana emergente bloqueada, visualizando en visor integrado:', popErr);
+            if (previewIframe && previewIframe.contentWindow) {
+                setTimeout(() => {
+                    try { previewIframe.contentWindow.print(); } catch(e) {}
+                }, 400);
+            }
         }
 
         if (btnText) btnText.innerText = 'Guardar y generar PDF convocatoria';
@@ -2699,6 +2717,31 @@ function setupEventListeners() {
             }
             document.getElementById('edit-position-overlay').style.display = 'none';
             currentlyEditingPlayerId = null;
+        });
+    }
+
+    // PDF Preview Modal listeners
+    const btnClosePdfModal = document.getElementById('btn-close-pdf-modal');
+    const pdfPreviewOverlay = document.getElementById('pdf-preview-overlay');
+    if (btnClosePdfModal && pdfPreviewOverlay) {
+        btnClosePdfModal.addEventListener('click', () => {
+            pdfPreviewOverlay.style.display = 'none';
+        });
+        pdfPreviewOverlay.addEventListener('click', (e) => {
+            if (e.target === pdfPreviewOverlay) {
+                pdfPreviewOverlay.style.display = 'none';
+            }
+        });
+    }
+
+    const btnPrintModalPdf = document.getElementById('btn-print-modal-pdf');
+    if (btnPrintModalPdf) {
+        btnPrintModalPdf.addEventListener('click', () => {
+            const previewIframe = document.getElementById('pdf-preview-iframe');
+            if (previewIframe && previewIframe.contentWindow) {
+                previewIframe.contentWindow.focus();
+                previewIframe.contentWindow.print();
+            }
         });
     }
 }

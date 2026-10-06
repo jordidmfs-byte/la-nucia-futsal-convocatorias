@@ -2101,6 +2101,14 @@ function loadFromHistory(id, skipConfirm = false) {
         document.getElementById('tab-filial')?.classList.toggle('active', currentTeam === 'filial');
         document.getElementById('tab-juvenil')?.classList.toggle('active', currentTeam === 'juvenil');
         
+        const isPrimerEquipo = (currentTeam === 'primer-equipo' || userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil'));
+        if (isPrimerEquipo) {
+            const tabFil = document.getElementById('tab-filial');
+            const tabJuv = document.getElementById('tab-juvenil');
+            if (tabFil) tabFil.style.display = 'none';
+            if (tabJuv) tabJuv.style.display = 'none';
+        }
+
         const searchContainer = document.getElementById('guest-search-container');
         const searchLabel = document.getElementById('label-guest-search');
         if (searchContainer) {
@@ -2170,60 +2178,118 @@ function renderHistory() {
     const history = getHistory().filter(record => !isDeletedOrForbiddenHistoryRecord(record));
     container.innerHTML = '';
     
-    // Check if in Primer Equipo mode (any non-restricted session or active primer-equipo)
+    // Check if in Primer Equipo mode:
+    // If currentTeam is 'primer-equipo' or userRole is 'primer-equipo', it MUST be strictly isolated
     const isPrimerEquipo = (currentTeam === 'primer-equipo' || userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil'));
     
-    let baseHistory = history;
     if (isPrimerEquipo) {
-        // En Primer Equipo, NO sale ni filial ni juvenil ni el historial de estos
-        baseHistory = history.filter(r => r.team === 'primer-equipo' && r.team !== 'filial' && r.team !== 'juvenil');
-    } else if (userRole === 'filial') {
+        // En Primer Equipo, NUNCA sale filial ni juvenil ni su historial bajo ningún concepto
+        const primerEquipoRecords = history.filter(r => r.team === 'primer-equipo');
+        
+        if (primerEquipoRecords.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas del Primer Equipo.</div>';
+            return;
+        }
+
+        const titleBadge = document.createElement('div');
+        titleBadge.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 10px 14px; background: rgba(227,6,19,0.12); border: 1px solid rgba(227,6,19,0.3); border-radius: 8px;';
+        titleBadge.innerHTML = `<div style="font-size: 13px; font-weight: 700; color: #fca5a5; display: flex; align-items: center; gap: 8px;"><span>🔴</span> Historial Oficial - Primer Equipo (${primerEquipoRecords.length} convocatorias)</div>`;
+        container.appendChild(titleBadge);
+
+        primerEquipoRecords.forEach(record => {
+            const dateObj = new Date(record.timestamp);
+            const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const card = document.createElement('div');
+            card.style.cssText = 'border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; background: white; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;';
+            
+            const header = document.createElement('div');
+            header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; flex-wrap: wrap; gap: 8px;';
+            
+            const teamBadgeHtml = '<span style="display: inline-block; margin-left: 8px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: bold;">🔴 Primer Equipo</span>';
+            
+            header.innerHTML = `
+                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                    <span style="font-weight: bold; color: #1e293b; font-size: 14px;">${record.jornada} vs ${record.rival}</span>
+                    ${teamBadgeHtml}
+                </div>
+                <div style="font-size: 12px; color: #64748b;">Guardado el ${dateStr}</div>
+            `;
+            
+            const calledCount = (record.squadState || []).filter(p => p.isCalled).length;
+            const notCalledCount = (record.squadState || []).filter(p => !p.isCalled).length;
+            
+            const body = document.createElement('div');
+            body.style.cssText = 'display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;';
+            body.innerHTML = `
+                <div style="font-size: 13px; color: #475569;">
+                    <div><strong>Fecha partido:</strong> ${formatDateTimeString(record.schedule)}</div>
+                    <div><strong>Convocados:</strong> <span style="color: #10b981; font-weight: bold;">${calledCount}</span> | <strong>Bajas:</strong> <span style="color: #ef4444; font-weight: bold;">${notCalledCount}</span></div>
+                </div>
+            `;
+            
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display: flex; gap: 8px;';
+            
+            const loadBtn = document.createElement('button');
+            loadBtn.innerText = 'Cargar Datos';
+            loadBtn.style.cssText = 'background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;';
+            loadBtn.onclick = () => loadFromHistory(record.id);
+            
+            const delBtn = document.createElement('button');
+            delBtn.innerText = '🗑️';
+            delBtn.title = 'Borrar del historial';
+            delBtn.style.cssText = 'background: #fee2e2; color: #ef4444; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px;';
+            delBtn.onclick = () => deleteFromHistory(record.id);
+            
+            actions.appendChild(loadBtn);
+            actions.appendChild(delBtn);
+            body.appendChild(actions);
+            
+            card.appendChild(header);
+            card.appendChild(body);
+            container.appendChild(card);
+        });
+
+        // Early return: physical guarantee that nothing else can render
+        return;
+    }
+
+    // Otherwise, render Filial / Juvenil view for restricted users
+    let baseHistory = history;
+    if (userRole === 'filial') {
         baseHistory = history.filter(r => r.team === 'filial' || r.team === 'juvenil');
     } else if (userRole === 'juvenil') {
         baseHistory = history.filter(r => r.team === 'juvenil');
     }
 
     if (baseHistory.length === 0) {
-        container.innerHTML = `<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas${isPrimerEquipo ? ' del Primer Equipo' : ''}.</div>`;
+        container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas.</div>';
         return;
     }
 
-    let filteredHistory = isPrimerEquipo ? baseHistory.filter(r => r.team === 'primer-equipo' && r.team !== 'filial' && r.team !== 'juvenil') : baseHistory;
+    // Filter controls UI para filial / juvenil
+    const filterBar = document.createElement('div');
+    filterBar.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);';
+    
+    let buttonsHtml = `<span style="font-size: 12px; font-weight: bold; color: var(--text-muted);">Filtrar por equipo:</span>
+        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'all' ? 'active-filter' : ''}" data-team="all" style="background: ${historyFilterTeam === 'all' ? '#E30613' : 'rgba(255,255,255,0.08)'}; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Todos (${baseHistory.length})</button>
+        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'filial' ? 'active-filter' : ''}" data-team="filial" style="background: ${historyFilterTeam === 'filial' ? '#2563eb' : 'rgba(59,130,246,0.15)'}; color: ${historyFilterTeam === 'filial' ? '#fff' : '#93c5fd'}; border: 1px solid rgba(59,130,246,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔵 Filial (${baseHistory.filter(r => r.team === 'filial').length})</button>
+        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'juvenil' ? 'active-filter' : ''}" data-team="juvenil" style="background: ${historyFilterTeam === 'juvenil' ? '#d97706' : 'rgba(245,158,11,0.15)'}; color: ${historyFilterTeam === 'juvenil' ? '#fff' : '#fde68a'}; border: 1px solid rgba(245,158,11,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🟡 Juvenil (${baseHistory.filter(r => r.team === 'juvenil').length})</button>
+    `;
+    filterBar.innerHTML = buttonsHtml;
+    container.appendChild(filterBar);
 
-    if (isPrimerEquipo) {
-        // En Primer Equipo nunca mostramos botones ni registros de filial o juvenil
-        const titleBadge = document.createElement('div');
-        titleBadge.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 10px 14px; background: rgba(227,6,19,0.12); border: 1px solid rgba(227,6,19,0.3); border-radius: 8px;';
-        titleBadge.innerHTML = `<div style="font-size: 13px; font-weight: 700; color: #fca5a5; display: flex; align-items: center; gap: 8px;"><span>🔴</span> Historial Oficial - Primer Equipo (${filteredHistory.length} convocatorias)</div>`;
-        container.appendChild(titleBadge);
-    } else {
-        // Filter controls UI para coordinadores / filial
-        const filterBar = document.createElement('div');
-        filterBar.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);';
-        
-        let buttonsHtml = `<span style="font-size: 12px; font-weight: bold; color: var(--text-muted);">Filtrar por equipo:</span>
-            <button type="button" class="btn-filter-hist ${historyFilterTeam === 'all' ? 'active-filter' : ''}" data-team="all" style="background: ${historyFilterTeam === 'all' ? '#E30613' : 'rgba(255,255,255,0.08)'}; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Todos (${baseHistory.length})</button>`;
-        
-        if (userRole !== 'filial') {
-            buttonsHtml += `<button type="button" class="btn-filter-hist ${historyFilterTeam === 'primer-equipo' ? 'active-filter' : ''}" data-team="primer-equipo" style="background: ${historyFilterTeam === 'primer-equipo' ? '#dc2626' : 'rgba(239,68,68,0.15)'}; color: ${historyFilterTeam === 'primer-equipo' ? '#fff' : '#fca5a5'}; border: 1px solid rgba(239,68,68,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔴 1º Equipo (${baseHistory.filter(r => r.team === 'primer-equipo').length})</button>`;
-        }
-        buttonsHtml += `
-            <button type="button" class="btn-filter-hist ${historyFilterTeam === 'filial' ? 'active-filter' : ''}" data-team="filial" style="background: ${historyFilterTeam === 'filial' ? '#2563eb' : 'rgba(59,130,246,0.15)'}; color: ${historyFilterTeam === 'filial' ? '#fff' : '#93c5fd'}; border: 1px solid rgba(59,130,246,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔵 Filial (${baseHistory.filter(r => r.team === 'filial').length})</button>
-            <button type="button" class="btn-filter-hist ${historyFilterTeam === 'juvenil' ? 'active-filter' : ''}" data-team="juvenil" style="background: ${historyFilterTeam === 'juvenil' ? '#d97706' : 'rgba(245,158,11,0.15)'}; color: ${historyFilterTeam === 'juvenil' ? '#fff' : '#fde68a'}; border: 1px solid rgba(245,158,11,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🟡 Juvenil (${baseHistory.filter(r => r.team === 'juvenil').length})</button>
-        `;
-        filterBar.innerHTML = buttonsHtml;
-        container.appendChild(filterBar);
-
-        filterBar.querySelectorAll('.btn-filter-hist').forEach(btn => {
-            btn.addEventListener('click', () => {
-                historyFilterTeam = btn.getAttribute('data-team');
-                renderHistory();
-            });
+    filterBar.querySelectorAll('.btn-filter-hist').forEach(btn => {
+        btn.addEventListener('click', () => {
+            historyFilterTeam = btn.getAttribute('data-team');
+            renderHistory();
         });
+    });
 
-        if (historyFilterTeam !== 'all') {
-            filteredHistory = baseHistory.filter(r => r.team === historyFilterTeam);
-        }
+    let filteredHistory = baseHistory;
+    if (historyFilterTeam !== 'all') {
+        filteredHistory = baseHistory.filter(r => r.team === historyFilterTeam);
     }
 
     if (filteredHistory.length === 0) {
@@ -2235,10 +2301,6 @@ function renderHistory() {
     }
 
     filteredHistory.forEach(record => {
-        // Double-check failsafe: In Primer Equipo mode, NEVER render filial or juvenil records
-        if (isPrimerEquipo && (record.team === 'filial' || record.team === 'juvenil' || record.team !== 'primer-equipo')) {
-            return;
-        }
         const dateObj = new Date(record.timestamp);
         const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
@@ -2249,9 +2311,7 @@ function renderHistory() {
         header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; flex-wrap: wrap; gap: 8px;';
         
         let teamBadgeHtml = '';
-        if (record.team === 'primer-equipo') {
-            teamBadgeHtml = '<span style="display: inline-block; margin-left: 8px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: bold;">🔴 Primer Equipo</span>';
-        } else if (record.team === 'juvenil') {
+        if (record.team === 'juvenil') {
             teamBadgeHtml = '<span style="display: inline-block; margin-left: 8px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; font-weight: bold;">🟡 Juvenil</span>';
         } else {
             teamBadgeHtml = '<span style="display: inline-block; margin-left: 8px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; font-weight: bold;">🔵 Filial</span>';

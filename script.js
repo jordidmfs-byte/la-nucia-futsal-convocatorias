@@ -1839,39 +1839,7 @@ let activeLoadedHistoryId = null;
 
 function updateEditingBanner() {
     let banner = document.getElementById('editing-history-banner');
-    const history = getHistory();
-
     if (!activeLoadedHistoryId) {
-        // Si no hay ninguna convocatoria cargada actualmente en pantalla, mostrar la última guardada de este equipo
-        const latestMatch = history.find(h => h.team === currentTeam);
-        if (latestMatch) {
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'editing-history-banner';
-                const workspaceGrid = document.getElementById('workspace-grid');
-                if (workspaceGrid && workspaceGrid.parentNode) {
-                    workspaceGrid.parentNode.insertBefore(banner, workspaceGrid);
-                }
-            }
-            banner.style.cssText = 'background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 10px 16px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-            banner.style.display = 'flex';
-            banner.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 16px;">📋</span>
-                    <div>
-                        <span style="color: #ffffff; font-weight: bold;">Última convocatoria guardada:</span>
-                        <span>${latestMatch.jornada} ${latestMatch.rival ? 'vs ' + latestMatch.rival : ''} (${latestMatch.schedule ? formatDateTimeString(latestMatch.schedule) : 'Sin fecha'})</span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" id="btn-quick-load-history" style="background: #10B981; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: opacity 0.2s;">📥 Cargar en pantalla</button>
-                </div>
-            `;
-            document.getElementById('btn-quick-load-history')?.addEventListener('click', () => {
-                loadFromHistory(latestMatch.id, true);
-            });
-            return;
-        }
         if (banner) banner.style.display = 'none';
         return;
     }
@@ -2146,13 +2114,8 @@ function renderHistory() {
         return;
     }
     
-    // Filter history based on role:
-    // - restricted: only filial + juvenil records
-    // - admin / default: all saved convocatorias (Primer Equipo, Filial, Juvenil)
+    // Base history includes all saved convocatorias across all categories
     let baseHistory = history;
-    if (userRole === 'restricted') {
-        baseHistory = history.filter(record => record.team !== 'primer-equipo');
-    }
 
     // Filter controls UI
     const filterBar = document.createElement('div');
@@ -2160,7 +2123,7 @@ function renderHistory() {
     filterBar.innerHTML = `
         <span style="font-size: 12px; font-weight: bold; color: var(--text-muted);">Filtrar por equipo:</span>
         <button type="button" class="btn-filter-hist ${historyFilterTeam === 'all' ? 'active-filter' : ''}" data-team="all" style="background: ${historyFilterTeam === 'all' ? '#E30613' : 'rgba(255,255,255,0.08)'}; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Todos (${baseHistory.length})</button>
-        ${userRole !== 'restricted' ? `<button type="button" class="btn-filter-hist ${historyFilterTeam === 'primer-equipo' ? 'active-filter' : ''}" data-team="primer-equipo" style="background: ${historyFilterTeam === 'primer-equipo' ? '#dc2626' : 'rgba(239,68,68,0.15)'}; color: ${historyFilterTeam === 'primer-equipo' ? '#fff' : '#fca5a5'}; border: 1px solid rgba(239,68,68,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔴 1º Equipo (${baseHistory.filter(r => r.team === 'primer-equipo').length})</button>` : ''}
+        <button type="button" class="btn-filter-hist ${historyFilterTeam === 'primer-equipo' ? 'active-filter' : ''}" data-team="primer-equipo" style="background: ${historyFilterTeam === 'primer-equipo' ? '#dc2626' : 'rgba(239,68,68,0.15)'}; color: ${historyFilterTeam === 'primer-equipo' ? '#fff' : '#fca5a5'}; border: 1px solid rgba(239,68,68,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔴 1º Equipo (${baseHistory.filter(r => r.team === 'primer-equipo').length})</button>
         <button type="button" class="btn-filter-hist ${historyFilterTeam === 'filial' ? 'active-filter' : ''}" data-team="filial" style="background: ${historyFilterTeam === 'filial' ? '#2563eb' : 'rgba(59,130,246,0.15)'}; color: ${historyFilterTeam === 'filial' ? '#fff' : '#93c5fd'}; border: 1px solid rgba(59,130,246,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🔵 Filial (${baseHistory.filter(r => r.team === 'filial').length})</button>
         <button type="button" class="btn-filter-hist ${historyFilterTeam === 'juvenil' ? 'active-filter' : ''}" data-team="juvenil" style="background: ${historyFilterTeam === 'juvenil' ? '#d97706' : 'rgba(245,158,11,0.15)'}; color: ${historyFilterTeam === 'juvenil' ? '#fff' : '#fde68a'}; border: 1px solid rgba(245,158,11,0.4); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🟡 Juvenil (${baseHistory.filter(r => r.team === 'juvenil').length})</button>
     `;
@@ -2622,8 +2585,8 @@ function setupEventListeners() {
             if (actionsBar) actionsBar.style.display = 'none';
             if (historyGrid) historyGrid.style.display = 'grid';
             
-            // Set history filter strictly to current active team
-            historyFilterTeam = currentTeam || 'primer-equipo';
+            // Mostrar todas las convocatorias guardadas por defecto para que nada quede oculto
+            historyFilterTeam = 'all';
             renderHistory();
         });
     }

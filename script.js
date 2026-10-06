@@ -1553,6 +1553,7 @@ async function fetchCloudData() {
         if (isLocalMissingItems || localHistory.length !== mergedHistory.length) {
             saveHistory(mergedHistory);
             renderHistory();
+            if (typeof updateEditingBanner === 'function') updateEditingBanner();
         }
 
         // Detect if cloud storage needs updating
@@ -1630,8 +1631,15 @@ function startRealtimeSync() {
 }
 
 // Deleted History IDs Tracking & Guard
-const PROTECTED_HISTORY_RIVALS = ['dianense', 'nueva elda', 'elche 2012', 'ondarense', 'hercules', 'futsal ibi', 'manresa', 'covisa', 'valencia', 'calpe'];
+const PROTECTED_HISTORY_RIVALS = [
+    'dianense', 'nueva elda', 'elche 2012', 'ondarense', 'hercules', 'futsal ibi', 
+    'manresa', 'covisa', 'valencia', 'calpe', 'les corts', 'corts', 'gasifred', 
+    'picassent', 'cerdanyola', 'sabadell', 'santa coloma', 'martorell', 'ripollet', 
+    'canet', 'hospitalet', 'bellsport', 'castelldefels', 'serelles', 'paidos'
+];
 const PROTECTED_HISTORY_IDS = [
+    '1790326565400',
+    '1790288466127',
     '1789673011189', '1789645601365', '1789513540061',
     '1789023224973', '1788914254308', '1788534318089',
     '1788219102000', '1788219101402', '1788219354121',
@@ -1831,12 +1839,43 @@ let activeLoadedHistoryId = null;
 
 function updateEditingBanner() {
     let banner = document.getElementById('editing-history-banner');
+    const history = getHistory();
+
     if (!activeLoadedHistoryId) {
+        // Si no hay ninguna convocatoria cargada actualmente en pantalla, mostrar la última guardada de este equipo
+        const latestMatch = history.find(h => h.team === currentTeam);
+        if (latestMatch) {
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'editing-history-banner';
+                const workspaceGrid = document.getElementById('workspace-grid');
+                if (workspaceGrid && workspaceGrid.parentNode) {
+                    workspaceGrid.parentNode.insertBefore(banner, workspaceGrid);
+                }
+            }
+            banner.style.cssText = 'background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 10px 16px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+            banner.style.display = 'flex';
+            banner.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 16px;">📋</span>
+                    <div>
+                        <span style="color: #ffffff; font-weight: bold;">Última convocatoria guardada:</span>
+                        <span>${latestMatch.jornada} ${latestMatch.rival ? 'vs ' + latestMatch.rival : ''} (${latestMatch.schedule ? formatDateTimeString(latestMatch.schedule) : 'Sin fecha'})</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btn-quick-load-history" style="background: #10B981; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: opacity 0.2s;">📥 Cargar en pantalla</button>
+                </div>
+            `;
+            document.getElementById('btn-quick-load-history')?.addEventListener('click', () => {
+                loadFromHistory(latestMatch.id, true);
+            });
+            return;
+        }
         if (banner) banner.style.display = 'none';
         return;
     }
 
-    const history = getHistory();
     const record = history.find(h => String(h.id) === String(activeLoadedHistoryId));
     if (!record) {
         activeLoadedHistoryId = null;
@@ -1854,6 +1893,7 @@ function updateEditingBanner() {
         }
     }
 
+    banner.style.cssText = 'background: rgba(37, 99, 235, 0.18); border: 1px solid rgba(59, 130, 246, 0.5); color: #93c5fd; padding: 12px 18px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
     banner.style.display = 'flex';
     banner.innerHTML = `
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -2016,8 +2056,8 @@ function clearAllHistory() {
     }
 }
 
-function loadFromHistory(id) {
-    if (!confirm('¿Deseas cargar esta convocatoria? Esto sobreescribirá los datos actuales en pantalla.')) {
+function loadFromHistory(id, skipConfirm = false) {
+    if (!skipConfirm && !confirm('¿Deseas cargar esta convocatoria? Esto sobreescribirá los datos actuales en pantalla.')) {
         return;
     }
     

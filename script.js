@@ -1635,7 +1635,7 @@ const PROTECTED_HISTORY_RIVALS = [
     'dianense', 'nueva elda', 'elche 2012', 'ondarense', 'hercules', 'futsal ibi', 
     'manresa', 'covisa', 'valencia', 'calpe', 'les corts', 'corts', 'gasifred', 
     'picassent', 'cerdanyola', 'sabadell', 'santa coloma', 'martorell', 'ripollet', 
-    'canet', 'hospitalet', 'bellsport', 'castelldefels', 'serelles', 'paidos'
+    'canet', 'hospitalet', 'bellsport', 'castelldefels', 'serelles', 'paidos', 'castalla'
 ];
 const PROTECTED_HISTORY_IDS = [
     '1790326565400',

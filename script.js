@@ -865,7 +865,7 @@ function formatDateTimeString(val) {
 }
 
 // Generate and export official PDF Convocatoria (100% reliable vector PDF engine)
-function generatePDF() {
+function generatePDF(targetWindow = null) {
     const btnText = document.getElementById('generate-pdf-btn-text');
     const spinner = document.getElementById('generate-pdf-spinner');
     
@@ -1303,11 +1303,12 @@ function generatePDF() {
 </body>
 </html>`;
 
-        const printWin = window.open('', '_blank');
+        const printWin = targetWindow && !targetWindow.closed ? targetWindow : window.open('', '_blank');
         if (printWin) {
             printWin.document.open();
             printWin.document.write(folioHTML);
             printWin.document.close();
+            try { printWin.focus(); } catch (e) {}
         } else {
             const iframe = document.createElement('iframe');
             iframe.style.position = 'fixed';
@@ -2376,8 +2377,17 @@ function setupEventListeners() {
     const generatePdfBtn = document.getElementById('generate-pdf-btn');
     if (generatePdfBtn) {
         generatePdfBtn.addEventListener('click', async () => {
-            await saveCurrentToHistory();
-            generatePDF();
+            // Pre-open window synchronously to prevent mobile/desktop popup blockers from blocking it after async cloud sync
+            const preOpenedWin = window.open('', '_blank');
+            if (preOpenedWin) {
+                preOpenedWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Generando PDF Convocatoria...</title><style>body{background:#0f172a;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}</style></head><body><div style="text-align:center;"><h2>⚽ Guardando convocatoria y preparando PDF...</h2><p style="color:#94a3b8;">Por favor espera un segundo...</p></div></body></html>');
+            }
+            try {
+                await saveCurrentToHistory();
+            } catch (e) {
+                console.error('Error guardando en historial:', e);
+            }
+            generatePDF(preOpenedWin);
         });
     }
 

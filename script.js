@@ -2179,11 +2179,12 @@ function renderHistory() {
     container.innerHTML = '';
     
     // Check if in Primer Equipo mode:
-    // If currentTeam is 'primer-equipo' or userRole is 'primer-equipo', it MUST be strictly isolated
-    const isPrimerEquipo = (currentTeam === 'primer-equipo' || userRole === 'primer-equipo' || (userRole !== 'filial' && userRole !== 'juvenil'));
+    // Check localStorage directly so no timing or state desync can leak other teams
+    const currentStoredAuth = localStorage.getItem('laNuciaFS_auth');
+    const isPrimerEquipo = (currentStoredAuth === 'primer-equipo' || currentTeam === 'primer-equipo' || userRole === 'primer-equipo' || (currentStoredAuth !== 'filial' && currentStoredAuth !== 'juvenil' && userRole !== 'filial' && userRole !== 'juvenil'));
     
     if (isPrimerEquipo) {
-        // En Primer Equipo, NUNCA sale filial ni juvenil ni su historial bajo ningún concepto
+        // En Primer Equipo (contraseña lanucia), NUNCA sale filial ni juvenil ni su historial bajo ningún concepto
         const primerEquipoRecords = history.filter(r => r.team === 'primer-equipo');
         
         if (primerEquipoRecords.length === 0) {

@@ -173,7 +173,7 @@ function populateJornadaDropdown(team = currentTeam) {
         select.appendChild(option);
     }
     
-    // Opciones especiales: Supercopa (Primer Equipo) y Amistoso (Primer Equipo, Filial y Juvenil)
+    // Opciones especiales: Supercopa (Primer Equipo), Copa de España y Amistoso (Primer Equipo, Filial y Juvenil)
     if (team === 'primer-equipo') {
         const optSupercopa = document.createElement('option');
         optSupercopa.value = 'Supercopa';
@@ -181,6 +181,11 @@ function populateJornadaDropdown(team = currentTeam) {
         select.appendChild(optSupercopa);
     }
     
+    const optCopaEspana = document.createElement('option');
+    optCopaEspana.value = 'Copa España';
+    optCopaEspana.text = 'Copa España';
+    select.appendChild(optCopaEspana);
+
     const optAmistoso = document.createElement('option');
     optAmistoso.value = 'Amistoso';
     optAmistoso.text = 'Amistoso';
@@ -884,7 +889,7 @@ function generatePDF(targetWindow = null) {
             const jVal = document.getElementById('input-jornada')?.value;
             const cal = PRIMER_EQUIPO_CALENDAR.find(c => String(c.jornada) === String(jVal));
             if (cal) rivalVal = cal.rival;
-            else if (jVal === 'Supercopa' || jVal === 'Amistoso') rivalVal = jVal;
+            else if (jVal === 'Supercopa' || jVal === 'Copa España' || jVal === 'Amistoso') rivalVal = jVal;
         }
         const scheduleVal = formatDateTimeString(document.getElementById('input-schedule')?.value);
         const callupTimeVal = document.getElementById('input-callup-time')?.value || '';
@@ -1495,7 +1500,7 @@ function saveCurrentTeamDraftToLocal() {
         const jVal = document.getElementById('input-jornada')?.value;
         const cal = PRIMER_EQUIPO_CALENDAR.find(c => String(c.jornada) === String(jVal));
         if (cal) draftRival = cal.rival;
-        else if (jVal === 'Supercopa' || jVal === 'Amistoso') draftRival = jVal;
+        else if (jVal === 'Supercopa' || jVal === 'Copa España' || jVal === 'Amistoso') draftRival = jVal;
     }
 
     drafts[currentTeam] = {
@@ -1951,7 +1956,7 @@ async function saveCurrentToHistory() {
         if (cal) {
             rivalVal = cal.rival;
             if (document.getElementById('input-rival')) document.getElementById('input-rival').value = cal.rival;
-        } else if (jVal === 'Supercopa' || jVal === 'Amistoso') {
+        } else if (jVal === 'Supercopa' || jVal === 'Copa España' || jVal === 'Amistoso') {
             rivalVal = jVal;
             if (document.getElementById('input-rival')) document.getElementById('input-rival').value = jVal;
         }
@@ -2619,6 +2624,11 @@ function setupEventListeners() {
                     document.getElementById('input-venue').value = 'Pabellón Camilo Cano';
                 } else if (val === 'Supercopa') {
                     document.getElementById('input-rival').value = 'Supercopa';
+                    document.getElementById('input-schedule').value = '';
+                    document.getElementById('input-callup-time').value = '';
+                    document.getElementById('input-venue').value = 'Pabellón Camilo Cano';
+                } else if (val === 'Copa España') {
+                    document.getElementById('input-rival').value = 'Copa España';
                     document.getElementById('input-schedule').value = '';
                     document.getElementById('input-callup-time').value = '';
                     document.getElementById('input-venue').value = 'Pabellón Camilo Cano';

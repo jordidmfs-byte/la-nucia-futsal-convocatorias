@@ -2178,14 +2178,19 @@ function renderHistory() {
     const history = getHistory().filter(record => !isDeletedOrForbiddenHistoryRecord(record));
     container.innerHTML = '';
     
-    // Check if in Primer Equipo mode:
-    // Check localStorage directly so no timing or state desync can leak other teams
-    const currentStoredAuth = localStorage.getItem('laNuciaFS_auth');
-    const isPrimerEquipo = (currentStoredAuth === 'primer-equipo' || currentTeam === 'primer-equipo' || userRole === 'primer-equipo' || (currentStoredAuth !== 'filial' && currentStoredAuth !== 'juvenil' && userRole !== 'filial' && userRole !== 'juvenil'));
+    // Check auth directly from localStorage and state
+    const currentStoredAuth = (localStorage.getItem('laNuciaFS_auth') || userRole || '').trim().toLowerCase();
+    const isPrimerEquipo = (currentStoredAuth === 'primer-equipo' || (currentStoredAuth !== 'filial' && currentStoredAuth !== 'juvenil'));
     
+    // Double ensure tabs for filial/juvenil are strictly hidden in primer-equipo mode
     if (isPrimerEquipo) {
+        const tabFil = document.getElementById('tab-filial');
+        const tabJuv = document.getElementById('tab-juvenil');
+        if (tabFil) tabFil.style.display = 'none';
+        if (tabJuv) tabJuv.style.display = 'none';
+        
         // En Primer Equipo (contraseña lanucia), NUNCA sale filial ni juvenil ni su historial bajo ningún concepto
-        const primerEquipoRecords = history.filter(r => r.team === 'primer-equipo');
+        const primerEquipoRecords = history.filter(r => r && r.team === 'primer-equipo');
         
         if (primerEquipoRecords.length === 0) {
             container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas del Primer Equipo.</div>';
@@ -2252,16 +2257,16 @@ function renderHistory() {
             container.appendChild(card);
         });
 
-        // Early return: physical guarantee that nothing else can render
+        // Physical guarantee that nothing else can render
         return;
     }
 
     // Otherwise, render Filial / Juvenil view for restricted users
-    let baseHistory = history;
-    if (userRole === 'filial') {
-        baseHistory = history.filter(r => r.team === 'filial' || r.team === 'juvenil');
-    } else if (userRole === 'juvenil') {
-        baseHistory = history.filter(r => r.team === 'juvenil');
+    let baseHistory = [];
+    if (userRole === 'filial' || currentStoredAuth === 'filial') {
+        baseHistory = history.filter(r => r && (r.team === 'filial' || r.team === 'juvenil'));
+    } else if (userRole === 'juvenil' || currentStoredAuth === 'juvenil') {
+        baseHistory = history.filter(r => r && r.team === 'juvenil');
     }
 
     if (baseHistory.length === 0) {
@@ -2820,18 +2825,25 @@ function setupEventListeners() {
                 localStorage.setItem('laNuciaFS_auth', 'primer-equipo');
                 userRole = 'primer-equipo';
                 currentTeam = 'primer-equipo';
+                historyFilterTeam = 'primer-equipo';
+                const tabFil = document.getElementById('tab-filial');
+                const tabJuv = document.getElementById('tab-juvenil');
+                if (tabFil) tabFil.style.display = 'none';
+                if (tabJuv) tabJuv.style.display = 'none';
                 checkAuthAndInit();
                 window.location.reload();
             } else if (pass === PASS_RESTRICTED || pass === '2') {
                 localStorage.setItem('laNuciaFS_auth', 'filial');
                 userRole = 'filial';
                 currentTeam = 'filial';
+                historyFilterTeam = 'filial';
                 checkAuthAndInit();
                 window.location.reload();
             } else if (pass === 'juvenil' || pass === '3') {
                 localStorage.setItem('laNuciaFS_auth', 'juvenil');
                 userRole = 'juvenil';
                 currentTeam = 'juvenil';
+                historyFilterTeam = 'juvenil';
                 checkAuthAndInit();
                 window.location.reload();
             } else {

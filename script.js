@@ -173,18 +173,23 @@ function populateJornadaDropdown(team = currentTeam) {
         select.appendChild(option);
     }
     
-    // Opciones especiales: Supercopa (Primer Equipo), Copa de España y Amistoso (Primer Equipo, Filial y Juvenil)
+    // Opciones especiales
     if (team === 'primer-equipo') {
         const optSupercopa = document.createElement('option');
         optSupercopa.value = 'Supercopa';
         optSupercopa.text = 'Supercopa';
         select.appendChild(optSupercopa);
+
+        const optCopaEspana = document.createElement('option');
+        optCopaEspana.value = 'Copa España';
+        optCopaEspana.text = 'Copa España';
+        select.appendChild(optCopaEspana);
+    } else {
+        const optCopaNostra = document.createElement('option');
+        optCopaNostra.value = 'Copa Nostra';
+        optCopaNostra.text = 'Copa Nostra';
+        select.appendChild(optCopaNostra);
     }
-    
-    const optCopaEspana = document.createElement('option');
-    optCopaEspana.value = 'Copa España';
-    optCopaEspana.text = 'Copa España';
-    select.appendChild(optCopaEspana);
 
     const optAmistoso = document.createElement('option');
     optAmistoso.value = 'Amistoso';

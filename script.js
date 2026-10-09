@@ -2946,37 +2946,79 @@ function setupEventListeners() {
     const btnDownloadModalPdf = document.getElementById('btn-download-modal-pdf');
     if (btnDownloadModalPdf) {
         btnDownloadModalPdf.addEventListener('click', async () => {
-            const previewIframe = document.getElementById('pdf-preview-iframe');
-            const targetDoc = previewIframe?.contentDocument || previewIframe?.contentWindow?.document;
-            const containerEl = targetDoc?.querySelector('.page-container');
-            
-            if (!containerEl) {
-                alert('No se pudo encontrar el contenido para generar el archivo PDF.');
-                return;
-            }
-
             const originalBtnText = btnDownloadModalPdf.innerHTML;
-            btnDownloadModalPdf.innerHTML = '⏳ Generando PDF...';
+            btnDownloadModalPdf.innerHTML = '⏳ Preparando PDF...';
             btnDownloadModalPdf.disabled = true;
 
             try {
                 const filename = (lastGeneratedDocTitle || 'Convocatoria_Oficial_La_Nucia_FS') + '.pdf';
+
+                // Usamos el HTML ya generado y validado (lastGeneratedFolioHTML)
+                // Se renderiza en un contenedor en el documento principal, no dentro del iframe,
+                // para máxima compatibilidad con Safari iOS, Chrome Android y tablets.
+                let targetElement = null;
+                let tempWrapper = null;
+
+                if (lastGeneratedFolioHTML) {
+                    tempWrapper = document.createElement('div');
+                    tempWrapper.id = 'temp-pdf-render-wrapper';
+                    tempWrapper.style.position = 'fixed';
+                    tempWrapper.style.left = '-9999px';
+                    tempWrapper.style.top = '0';
+                    tempWrapper.style.width = '794px'; // Ancho estándar A4 a 96 DPI
+                    tempWrapper.style.background = '#ffffff';
+                    tempWrapper.style.zIndex = '-9999';
+                    
+                    // Extraer los estilos y el contenedor de la página
+                    const parser = new DOMParser();
+                    const docParsed = parser.parseFromString(lastGeneratedFolioHTML, 'text/html');
+                    const styles = docParsed.querySelectorAll('style, link[rel="stylesheet"]');
+                    const pageCont = docParsed.querySelector('.page-container');
+
+                    styles.forEach(s => tempWrapper.appendChild(s.cloneNode(true)));
+                    if (pageCont) {
+                        tempWrapper.appendChild(pageCont.cloneNode(true));
+                    } else {
+                        tempWrapper.innerHTML = docParsed.body.innerHTML;
+                    }
+                    document.body.appendChild(tempWrapper);
+                    targetElement = tempWrapper.querySelector('.page-container') || tempWrapper;
+                } else {
+                    const previewIframe = document.getElementById('pdf-preview-iframe');
+                    const targetDoc = previewIframe?.contentDocument || previewIframe?.contentWindow?.document;
+                    targetElement = targetDoc?.querySelector('.page-container');
+                }
+
+                if (!targetElement) {
+                    alert('No se pudo encontrar el contenido de la convocatoria para generar el PDF.');
+                    btnDownloadModalPdf.innerHTML = originalBtnText;
+                    btnDownloadModalPdf.disabled = false;
+                    return;
+                }
+
                 const opt = {
                     margin:       [0, 0, 0, 0],
                     filename:     filename,
                     image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        logging: false, 
+                        backgroundColor: '#ffffff',
+                        windowWidth: 794
+                    },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
                 if (typeof html2pdf !== 'undefined') {
-                    // Generar Blob PDF real
-                    const pdfBlob = await html2pdf().set(opt).from(containerEl).output('blob');
+                    btnDownloadModalPdf.innerHTML = '📤 Generando PDF...';
+                    const pdfBlob = await html2pdf().set(opt).from(targetElement).output('blob');
                     
-                    // Si el móvil o tablet soporta Web Share API con archivos, permitir enviar directamente (WhatsApp, Compartir, etc.)
+                    // Si el navegador soporta compartir archivos (iOS Safari, Android Chrome, tabletas)
                     const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
                     if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
                         try {
+                            btnDownloadModalPdf.innerHTML = '📤 Abriendo menú para enviar...';
                             await navigator.share({
                                 files: [pdfFile],
                                 title: filename,
@@ -2984,35 +3026,41 @@ function setupEventListeners() {
                             });
                             btnDownloadModalPdf.innerHTML = originalBtnText;
                             btnDownloadModalPdf.disabled = false;
+                            if (tempWrapper && tempWrapper.parentNode) tempWrapper.parentNode.removeChild(tempWrapper);
                             return;
                         } catch(shareErr) {
                             if (shareErr.name !== 'AbortError') {
-                                console.warn('Error compartiendo PDF, descargando en su lugar:', shareErr);
+                                console.warn('Error compartiendo PDF, descargando directamente:', shareErr);
                             }
                         }
                     }
 
-                    // Descarga directa del archivo PDF
+                    // Fallback a descarga directa del archivo PDF
                     const downloadUrl = URL.createObjectURL(pdfBlob);
                     const a = document.createElement('a');
                     a.href = downloadUrl;
                     a.download = filename;
+                    a.style.display = 'none';
                     document.body.appendChild(a);
                     a.click();
                     setTimeout(() => {
-                        document.body.removeChild(a);
+                        if (a.parentNode) document.body.removeChild(a);
                         URL.revokeObjectURL(downloadUrl);
-                    }, 1000);
+                    }, 1500);
                 } else {
-                    // Fallback directo a window.print
+                    const previewIframe = document.getElementById('pdf-preview-iframe');
                     if (previewIframe && previewIframe.contentWindow) {
                         previewIframe.contentWindow.focus();
                         previewIframe.contentWindow.print();
                     }
                 }
+
+                if (tempWrapper && tempWrapper.parentNode) {
+                    tempWrapper.parentNode.removeChild(tempWrapper);
+                }
             } catch (err) {
-                console.error('Error generando archivo PDF descargable:', err);
-                alert('Ocurrió un error al generar el archivo PDF. Puedes usar el botón de Imprimir.');
+                console.error('Error generando archivo PDF:', err);
+                alert('No se pudo generar el PDF directamente en este dispositivo. Puedes usar el botón de Imprimir / Guardar.');
             } finally {
                 btnDownloadModalPdf.innerHTML = originalBtnText;
                 btnDownloadModalPdf.disabled = false;

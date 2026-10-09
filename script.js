@@ -934,7 +934,7 @@ function generatePDF(targetWindow = null) {
     <style>
         @page {
             size: A4 portrait;
-            margin: 6mm 8mm;
+            margin: 0;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -944,6 +944,24 @@ function generatePDF(targetWindow = null) {
             line-height: 1.35;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        @media print {
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+            }
+            .action-bar-top { display: none !important; }
+            .page-container {
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 10mm 12mm !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
         }
         .page-container {
             max-width: 760px;
@@ -1158,10 +1176,6 @@ function generatePDF(targetWindow = null) {
             cursor: pointer;
         }
         .btn-print:hover { background: #b91c1c; }
-        @media print {
-            .action-bar-top { display: none !important; }
-            body { padding-top: 0 !important; }
-        }
         @media screen {
             body { padding-top: 55px; background: #e2e8f0; }
             .page-container { background: white; box-shadow: 0 5px 25px rgba(0,0,0,0.15); border-radius: 8px; margin-top: 15px; margin-bottom: 30px; }
@@ -1328,42 +1342,42 @@ function generatePDF(targetWindow = null) {
             console.error('Error creando Blob URL del PDF:', e);
         }
 
-        // Open/navigate target window to Blob URL or document.write
+        // Escribir directamente folioHTML en la ventana para que sea el documento puro sin URL blob
         let windowOpened = false;
         if (targetWindow && !targetWindow.closed) {
             try {
-                if (blobUrl) {
-                    targetWindow.location.href = blobUrl;
-                } else {
-                    targetWindow.document.open();
-                    targetWindow.document.write(folioHTML);
-                    targetWindow.document.close();
-                }
+                targetWindow.document.open();
+                targetWindow.document.write(folioHTML);
+                targetWindow.document.close();
                 targetWindow.focus();
                 windowOpened = true;
             } catch (err) {
-                console.warn('Error navegando targetWindow con location.href:', err);
+                console.warn('Error escribiendo en targetWindow:', err);
                 try {
-                    targetWindow.document.open();
-                    targetWindow.document.write(folioHTML);
-                    targetWindow.document.close();
-                    targetWindow.focus();
-                    windowOpened = true;
+                    if (blobUrl) {
+                        targetWindow.location.href = blobUrl;
+                        targetWindow.focus();
+                        windowOpened = true;
+                    }
                 } catch(e2) {}
             }
         }
 
         if (!windowOpened) {
             try {
-                const newWin = window.open(blobUrl || '', '_blank');
+                const newWin = window.open('', '_blank');
                 if (newWin) {
-                    if (!blobUrl) {
-                        newWin.document.open();
-                        newWin.document.write(folioHTML);
-                        newWin.document.close();
-                    }
+                    newWin.document.open();
+                    newWin.document.write(folioHTML);
+                    newWin.document.close();
                     newWin.focus();
                     windowOpened = true;
+                } else if (blobUrl) {
+                    const blobWin = window.open(blobUrl, '_blank');
+                    if (blobWin) {
+                        blobWin.focus();
+                        windowOpened = true;
+                    }
                 }
             } catch (e3) {
                 console.warn('window.open bloqueado por el navegador:', e3);
@@ -2925,28 +2939,29 @@ function setupEventListeners() {
     const btnPrintModalPdf = document.getElementById('btn-print-modal-pdf');
     if (btnPrintModalPdf) {
         btnPrintModalPdf.addEventListener('click', () => {
-            if (lastFolioBlobUrl) {
-                const w = window.open(lastFolioBlobUrl, '_blank');
-                if (w) {
-                    w.focus();
-                    return;
-                }
+            const previewIframe = document.getElementById('pdf-preview-iframe');
+            if (previewIframe && previewIframe.contentWindow) {
+                previewIframe.contentWindow.focus();
+                previewIframe.contentWindow.print();
+                return;
             }
             if (lastGeneratedFolioHTML) {
                 try {
-                    const blob = new Blob([lastGeneratedFolioHTML], { type: 'text/html;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const w = window.open(url, '_blank');
+                    const w = window.open('', '_blank');
                     if (w) {
+                        w.document.open();
+                        w.document.write(lastGeneratedFolioHTML);
+                        w.document.close();
                         w.focus();
                         return;
                     }
                 } catch(e) {}
             }
-            const previewIframe = document.getElementById('pdf-preview-iframe');
-            if (previewIframe && previewIframe.contentWindow) {
-                previewIframe.contentWindow.focus();
-                previewIframe.contentWindow.print();
+            if (lastFolioBlobUrl) {
+                const w = window.open(lastFolioBlobUrl, '_blank');
+                if (w) {
+                    w.focus();
+                }
             }
         });
     }

@@ -877,6 +877,7 @@ function formatDateTimeString(val) {
 // Global reference to last generated PDF document
 let lastGeneratedFolioHTML = '';
 let lastFolioBlobUrl = null;
+let lastGeneratedDocTitle = '';
 
 // Generate and export official PDF Convocatoria (100% reliable vector PDF engine)
 function generatePDF(targetWindow = null) {
@@ -920,6 +921,7 @@ function generatePDF(targetWindow = null) {
         const jornadaClean = (jornadaVal || 'Jornada').replace(/\s+/g, '_');
         const rivalClean = (rivalVal || 'Partido').replace(/\s+/g, '_');
         const docTitle = `Convocatoria_${teamClean}_${jornadaClean}_vs_${rivalClean}`;
+        lastGeneratedDocTitle = docTitle;
 
         const logoSrc = (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64) ? LOGO_BASE64 : 'La Nucia FS.png';
 
@@ -1404,10 +1406,15 @@ function generatePDF(targetWindow = null) {
             } catch(e4) {}
         }
 
-        // If window could not open (popup blocked by browser), show the in-app modal
-        if (!windowOpened && previewOverlay) {
+        // En móviles y tablets (iOS/Android), los navegadores bloquean o no manejan bien window.open emergente
+        // Por tanto, abrimos SIEMPRE el modal integrado de previsualización que incluye los botones de Descargar / Compartir e Imprimir
+        const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth <= 820);
+        
+        if (isMobileOrTablet && previewOverlay) {
             previewOverlay.style.display = 'flex';
-        } else if (previewOverlay) {
+        } else if (!windowOpened && previewOverlay) {
+            previewOverlay.style.display = 'flex';
+        } else if (previewOverlay && windowOpened) {
             previewOverlay.style.display = 'none';
         }
 
@@ -2932,6 +2939,83 @@ function setupEventListeners() {
         pdfPreviewOverlay.addEventListener('click', (e) => {
             if (e.target === pdfPreviewOverlay) {
                 pdfPreviewOverlay.style.display = 'none';
+            }
+        });
+    }
+
+    const btnDownloadModalPdf = document.getElementById('btn-download-modal-pdf');
+    if (btnDownloadModalPdf) {
+        btnDownloadModalPdf.addEventListener('click', async () => {
+            const previewIframe = document.getElementById('pdf-preview-iframe');
+            const targetDoc = previewIframe?.contentDocument || previewIframe?.contentWindow?.document;
+            const containerEl = targetDoc?.querySelector('.page-container');
+            
+            if (!containerEl) {
+                alert('No se pudo encontrar el contenido para generar el archivo PDF.');
+                return;
+            }
+
+            const originalBtnText = btnDownloadModalPdf.innerHTML;
+            btnDownloadModalPdf.innerHTML = '⏳ Generando PDF...';
+            btnDownloadModalPdf.disabled = true;
+
+            try {
+                const filename = (lastGeneratedDocTitle || 'Convocatoria_Oficial_La_Nucia_FS') + '.pdf';
+                const opt = {
+                    margin:       [0, 0, 0, 0],
+                    filename:     filename,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                if (typeof html2pdf !== 'undefined') {
+                    // Generar Blob PDF real
+                    const pdfBlob = await html2pdf().set(opt).from(containerEl).output('blob');
+                    
+                    // Si el móvil o tablet soporta Web Share API con archivos, permitir enviar directamente (WhatsApp, Compartir, etc.)
+                    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+                    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                        try {
+                            await navigator.share({
+                                files: [pdfFile],
+                                title: filename,
+                                text: 'Convocatoria oficial La Nucía FS'
+                            });
+                            btnDownloadModalPdf.innerHTML = originalBtnText;
+                            btnDownloadModalPdf.disabled = false;
+                            return;
+                        } catch(shareErr) {
+                            if (shareErr.name !== 'AbortError') {
+                                console.warn('Error compartiendo PDF, descargando en su lugar:', shareErr);
+                            }
+                        }
+                    }
+
+                    // Descarga directa del archivo PDF
+                    const downloadUrl = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(downloadUrl);
+                    }, 1000);
+                } else {
+                    // Fallback directo a window.print
+                    if (previewIframe && previewIframe.contentWindow) {
+                        previewIframe.contentWindow.focus();
+                        previewIframe.contentWindow.print();
+                    }
+                }
+            } catch (err) {
+                console.error('Error generando archivo PDF descargable:', err);
+                alert('Ocurrió un error al generar el archivo PDF. Puedes usar el botón de Imprimir.');
+            } finally {
+                btnDownloadModalPdf.innerHTML = originalBtnText;
+                btnDownloadModalPdf.disabled = false;
             }
         });
     }

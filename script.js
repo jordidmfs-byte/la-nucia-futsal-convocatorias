@@ -1166,31 +1166,53 @@ function generatePDF(targetWindow = null) {
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             z-index: 10000;
             font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .btn-print {
             background: #E30613;
             color: white;
             border: none;
-            padding: 8px 18px;
+            padding: 8px 16px;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
         }
         .btn-print:hover { background: #b91c1c; }
+        .btn-share {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-share:hover { background: #1d4ed8; }
         @media screen {
             body { padding-top: 55px; background: #e2e8f0; }
             .page-container { background: white; box-shadow: 0 5px 25px rgba(0,0,0,0.15); border-radius: 8px; margin-top: 15px; margin-bottom: 30px; }
         }
     </style>
+    <script src="html2pdf.bundle.min.js"></script>
 </head>
 <body>
     <div class="action-bar-top">
         <div style="font-size: 14px; font-weight: 600;">
             📄 Convocatoria Oficial — ${teamName} (${jornadaVal})
         </div>
-        <div>
-            <button class="btn-print" onclick="window.print();">📥 Guardar PDF / Imprimir</button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="btn-folio-share" class="btn-share" onclick="handleFolioDownloadOrShare();">📤 Enviar / Descargar PDF</button>
+            <button id="btn-folio-print" class="btn-print" onclick="handleFolioPrint();">🖨️ Imprimir / Guardar</button>
         </div>
     </div>
 
@@ -1324,10 +1346,96 @@ function generatePDF(targetWindow = null) {
     </div>
 
     <script>
-        window.addEventListener('load', function() {
-            setTimeout(function() {
+        const docTitle = ${JSON.stringify(docTitle)};
+
+        async function handleFolioDownloadOrShare() {
+            const btn = document.getElementById('btn-folio-share');
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = '⏳ Generando PDF...';
+                btn.disabled = true;
+            }
+
+            try {
+                const element = document.querySelector('.page-container');
+                if (!element) {
+                    window.print();
+                    return;
+                }
+
+                const filename = (docTitle || 'Convocatoria_Oficial_La_Nucia_FS') + '.pdf';
+                const opt = {
+                    margin:       [0, 0, 0, 0],
+                    filename:     filename,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', windowWidth: 794 },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                if (typeof html2pdf !== 'undefined') {
+                    const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+                    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+                    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                        try {
+                            if (btn) btn.innerHTML = '📤 Abriendo menú...';
+                            await navigator.share({
+                                files: [pdfFile],
+                                title: filename,
+                                text: 'Convocatoria oficial La Nucía FS'
+                            });
+                            return;
+                        } catch (shareErr) {
+                            if (shareErr.name !== 'AbortError') {
+                                console.warn('Error al compartir con Web Share API:', shareErr);
+                            }
+                        }
+                    }
+
+                    // Fallback directo a descarga de archivo
+                    const downloadUrl = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        if (a.parentNode) document.body.removeChild(a);
+                        URL.revokeObjectURL(downloadUrl);
+                    }, 1500);
+                } else {
+                    window.print();
+                }
+            } catch (err) {
+                console.error('Error generando PDF en ventana folio:', err);
                 window.print();
-            }, 300);
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalText || '📤 Enviar / Descargar PDF';
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function handleFolioPrint() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                // En móviles los diálogos de impresión fallan o no guardan PDF: redirigir a generar y compartir PDF
+                handleFolioDownloadOrShare();
+            } else {
+                window.print();
+            }
+        }
+
+        window.addEventListener('load', function() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            // Solo auto-imprimir en escritorios donde window.print() es nativo y seguro
+            if (!isMobile) {
+                setTimeout(function() {
+                    window.print();
+                }, 350);
+            }
         });
     </script>
 </body>
@@ -3071,11 +3179,25 @@ function setupEventListeners() {
     const btnPrintModalPdf = document.getElementById('btn-print-modal-pdf');
     if (btnPrintModalPdf) {
         btnPrintModalPdf.addEventListener('click', () => {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth <= 820);
+            if (isMobile) {
+                // En móviles y tablets, el print de iframe falla; ejecutar la generación y envío de PDF
+                const btnDownload = document.getElementById('btn-download-modal-pdf');
+                if (btnDownload) {
+                    btnDownload.click();
+                    return;
+                }
+            }
+
             const previewIframe = document.getElementById('pdf-preview-iframe');
             if (previewIframe && previewIframe.contentWindow) {
-                previewIframe.contentWindow.focus();
-                previewIframe.contentWindow.print();
-                return;
+                try {
+                    previewIframe.contentWindow.focus();
+                    previewIframe.contentWindow.print();
+                    return;
+                } catch (e) {
+                    console.warn('Error imprimiendo iframe:', e);
+                }
             }
             if (lastGeneratedFolioHTML) {
                 try {

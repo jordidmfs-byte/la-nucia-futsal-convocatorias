@@ -30,7 +30,6 @@ const FILIAL_TEAM_PLAYERS = [
     { id: 'f-11', number: 11, name: 'Antonio Cortes Ruiz', position: 'Ala', isGoalkeeper: false },
     { id: 'f-42', number: 42, name: 'Alvaro Roma Suarez', position: 'Ala', isGoalkeeper: false },
     { id: 'f-slm', number: '', name: 'Sergio Lago Mayorga', position: 'Ala zurdo', isGoalkeeper: false },
-    { id: 'f-jlrbh', number: '', name: 'Jose Luis Ruiz Ben Hamu', position: 'Sin posición', isGoalkeeper: false },
     { id: 'f-atp', number: '', name: 'Angel Trobo Perez', position: 'Ala diestro', isGoalkeeper: false },
     { id: 'f-7', number: 7, name: 'Victor Manzaneda Gadea', position: 'Pivot', isGoalkeeper: false },
     { id: 'f-6', number: 6, name: 'Demetrio Pozo Fernandez', position: 'Pivot', isGoalkeeper: false },
@@ -3376,6 +3375,14 @@ window.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(parsed)) {
                 const cleaned = parsed.map(String).filter(id => !PROTECTED_HISTORY_IDS.includes(id));
                 localStorage.setItem('laNuciaFS_deletedHistoryIds', JSON.stringify(cleaned));
+            }
+        }
+        const rawDrafts = localStorage.getItem('laNuciaFS_drafts');
+        if (rawDrafts) {
+            const draftsObj = JSON.parse(rawDrafts);
+            if (draftsObj && draftsObj.filial && Array.isArray(draftsObj.filial.squadState)) {
+                draftsObj.filial.squadState = draftsObj.filial.squadState.filter(p => p.id !== 'f-jlrbh' && !p.name.includes('Jose Luis Ruiz'));
+                localStorage.setItem('laNuciaFS_drafts', JSON.stringify(draftsObj));
             }
         }
     } catch(e) {}

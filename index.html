@@ -906,10 +906,16 @@
     <!-- Edit Position Overlay -->
     <div id="edit-position-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
         <div style="background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 350px;">
-            <h2 style="margin-bottom: 20px; color: white; font-size: 18px; font-family: 'Outfit', sans-serif;">Editar Posición</h2>
+            <h2 style="margin-bottom: 20px; color: white; font-size: 18px; font-family: 'Outfit', sans-serif;">Editar Jugador (Dorsal y Posición)</h2>
             <p id="edit-position-player-name" style="margin-bottom: 20px; color: #94a3b8; font-size: 14px; font-weight: bold;"></p>
             
+            <div style="margin-bottom: 18px;">
+                <label for="edit-player-number" style="display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: #cbd5e1;">Dorsal:</label>
+                <input type="number" id="edit-player-number" placeholder="Ej: 10 (o dejar vacío)" min="1" max="99" style="width: 100%; padding: 11px 15px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--glass-border); border-radius: 8px; font-size: 15px; outline: none;">
+            </div>
+
             <div style="margin-bottom: 25px;">
+                <label for="edit-position-select" style="display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: #cbd5e1;">Posición:</label>
                 <select id="edit-position-select" style="width: 100%; padding: 12px 15px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--glass-border); border-radius: 8px; font-size: 15px; outline: none;">
                     <option value="Portero">Portero</option>
                     <option value="Cierre">Cierre</option>
@@ -1282,6 +1288,6 @@
 
     <!-- Script references -->
     <script src="logo_base64.js"></script>
-    <script src="script.js?v=20261014_0921"></script>
+    <script src="script.js?v=20261016_1347"></script>
 </body>
 </html>

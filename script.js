@@ -26,14 +26,12 @@ const FILIAL_TEAM_PLAYERS = [
     { id: 'f-10', number: 10, name: 'Joan Manuel Misa Giarrusso', position: 'Cierre', isGoalkeeper: false },
     { id: 'f-36', number: 36, name: 'Alejandro Gomez Sola', position: 'Cierre', isGoalkeeper: false },
     { id: 'f-lafl', number: '', name: 'Luis Alejandro Flores Loja', position: 'Sin posición', isGoalkeeper: false },
-    { id: 'f-34-m', number: 34, name: 'Alberto Madagascar Casanova', position: 'Cierre', isGoalkeeper: false },
     { id: 'f-11', number: 11, name: 'Antonio Cortes Ruiz', position: 'Ala', isGoalkeeper: false },
     { id: 'f-42', number: 42, name: 'Alvaro Roma Suarez', position: 'Ala', isGoalkeeper: false },
     { id: 'f-slm', number: '', name: 'Sergio Lago Mayorga', position: 'Ala zurdo', isGoalkeeper: false },
     { id: 'f-atp', number: '', name: 'Angel Trobo Perez', position: 'Ala diestro', isGoalkeeper: false },
     { id: 'f-7', number: 7, name: 'Victor Manzaneda Gadea', position: 'Pivot', isGoalkeeper: false },
     { id: 'f-6', number: 6, name: 'Demetrio Pozo Fernandez', position: 'Pivot', isGoalkeeper: false },
-    { id: 'f-ejbr', number: '', name: 'Eduardo José Boye Ricardo', position: 'Sin posición', isGoalkeeper: false },
     { id: 'f-2', number: 2, name: 'Ibrahim Gaye Gaye', position: 'Pivot', isGoalkeeper: false }
 ];
 
@@ -220,6 +218,22 @@ function saveCustomPosition(playerId, position) {
     pushCloudData();
 }
 
+function getCustomNumbers() {
+    const saved = localStorage.getItem('laNuciaFS_customNumbers');
+    return saved ? JSON.parse(saved) : {};
+}
+
+function saveCustomNumber(playerId, numberVal) {
+    const custom = getCustomNumbers();
+    if (numberVal === '' || numberVal === null || numberVal === undefined) {
+        delete custom[playerId];
+    } else {
+        custom[playerId] = numberVal;
+    }
+    localStorage.setItem('laNuciaFS_customNumbers', JSON.stringify(custom));
+    pushCloudData();
+}
+
 // Helper to calculate call-up time 1h 15m (75 minutes) before match schedule
 function calculateCallupTime(matchDateTimeStr) {
     if (!matchDateTimeStr) return '';
@@ -238,6 +252,7 @@ function calculateCallupTime(matchDateTimeStr) {
 function loadTeamData(team) {
     squadState = [];
     const customPositions = getCustomPositions();
+    const customNumbers = getCustomNumbers();
     
     // Configurar desplegable de jornadas
     populateJornadaDropdown(team);
@@ -285,6 +300,7 @@ function loadTeamData(team) {
         FIRST_TEAM_PLAYERS.forEach(player => {
             squadState.push({
                 ...player,
+                number: (customNumbers[player.id] !== undefined) ? customNumbers[player.id] : player.number,
                 position: customPositions[player.id] || player.position,
                 isCalled: true,
                 reason: '',
@@ -302,6 +318,7 @@ function loadTeamData(team) {
         FILIAL_TEAM_PLAYERS.forEach(player => {
             squadState.push({
                 ...player,
+                number: (customNumbers[player.id] !== undefined) ? customNumbers[player.id] : player.number,
                 position: customPositions[player.id] || player.position,
                 isCalled: true,
                 reason: '',
@@ -319,6 +336,7 @@ function loadTeamData(team) {
         JUVENIL_TEAM_PLAYERS.forEach(player => {
             squadState.push({
                 ...player,
+                number: (customNumbers[player.id] !== undefined) ? customNumbers[player.id] : player.number,
                 position: customPositions[player.id] || player.position,
                 isCalled: true,
                 reason: '',
@@ -575,10 +593,10 @@ function renderPlayerList() {
         }
         
         label.innerHTML = `
-            <span class="dorsal-badge">${player.number !== '' ? player.number : '-'}</span> 
+            <span class="dorsal-badge edit-position-btn" data-id="${player.id}" style="cursor: pointer;" title="Editar dorsal o posición">${player.number !== '' ? player.number : '-'}</span> 
             <strong>${player.name}</strong> 
             <span class="pos-badge">${player.position}</span>
-            <span class="edit-position-btn" data-id="${player.id}" style="cursor: pointer; font-size: 14px; margin-left: 5px; color: #94a3b8; transition: color 0.2s;" title="Editar posición">&#9998;</span>
+            <span class="edit-position-btn" data-id="${player.id}" style="cursor: pointer; font-size: 14px; margin-left: 5px; color: #94a3b8; transition: color 0.2s;" title="Editar dorsal y posición">&#9998;</span>
             ${guestBadgeHtml}
             ${player.isGuest ? '<span class="delete-guest-btn" data-id="' + player.id + '" style="color: #EF4444; margin-left: 8px; cursor: pointer; padding: 0 4px; font-weight: bold;" title="Quitar de la convocatoria">❌</span>' : ''}
         `;
@@ -643,6 +661,10 @@ function openEditModal(playerId) {
     currentlyEditingPlayerId = playerId;
     
     document.getElementById('edit-position-player-name').innerText = player.name;
+    const numberInput = document.getElementById('edit-player-number');
+    if (numberInput) {
+        numberInput.value = (player.number !== '' && player.number !== undefined && player.number !== null) ? player.number : '';
+    }
     const select = document.getElementById('edit-position-select');
     
     // Select the correct option
@@ -1701,11 +1723,17 @@ async function fetchCloudData() {
         const mergedSigs = Array.from(new Set([...localSigs, ...cloudSigs]));
         saveDeletedHistorySignatures(mergedSigs);
 
-        // 2. Sync Custom Player Positions
+        // 2. Sync Custom Player Positions and Numbers
         if (data.customPositions && typeof data.customPositions === 'object') {
             const currentLocalPositions = getCustomPositions();
             const mergedPositions = { ...currentLocalPositions, ...data.customPositions };
             localStorage.setItem('laNuciaFS_customPositions', JSON.stringify(mergedPositions));
+        }
+
+        if (data.customNumbers && typeof data.customNumbers === 'object') {
+            const currentLocalNumbers = getCustomNumbers();
+            const mergedNumbers = { ...currentLocalNumbers, ...data.customNumbers };
+            localStorage.setItem('laNuciaFS_customNumbers', JSON.stringify(mergedNumbers));
         }
 
         // 3. Robust Two-way Union Merge for History
@@ -1776,6 +1804,7 @@ async function pushCloudData() {
         const deletedHistoryIds = getDeletedHistoryIds();
         const deletedSignatures = getDeletedHistorySignatures();
         const customPositions = getCustomPositions();
+        const customNumbers = getCustomNumbers();
         
         const payload = {
             drafts: drafts,
@@ -1783,6 +1812,7 @@ async function pushCloudData() {
             deletedHistoryIds: deletedHistoryIds,
             deletedSignatures: deletedSignatures,
             customPositions: customPositions,
+            customNumbers: customNumbers,
             lastUpdated: Date.now()
         };
         cloudLastUpdated = payload.lastUpdated;
@@ -1974,6 +2004,7 @@ function resetWorkspaceToNew(team = currentTeam) {
     // 3. Reset squadState: all players called, no reasons, no guest players
     squadState = [];
     const customPositions = getCustomPositions();
+    const customNumbers = getCustomNumbers();
     let playersSource = [];
     if (team === 'primer-equipo') {
         playersSource = FIRST_TEAM_PLAYERS;
@@ -1992,6 +2023,7 @@ function resetWorkspaceToNew(team = currentTeam) {
     playersSource.forEach(player => {
         squadState.push({
             ...player,
+            number: (customNumbers[player.id] !== undefined) ? customNumbers[player.id] : player.number,
             position: customPositions[player.id] || player.position,
             isCalled: true,
             reason: '',
@@ -3021,12 +3053,21 @@ function setupEventListeners() {
         btnSaveEdit.addEventListener('click', () => {
             if (currentlyEditingPlayerId) {
                 const newPos = document.getElementById('edit-position-select').value;
+                const numberInput = document.getElementById('edit-player-number');
+                let newNum = numberInput ? numberInput.value.trim() : '';
+                if (newNum !== '') {
+                    const parsedNum = parseInt(newNum, 10);
+                    newNum = isNaN(parsedNum) ? '' : parsedNum;
+                }
                 const player = squadState.find(p => p.id === currentlyEditingPlayerId);
                 if (player) {
                     player.position = newPos;
+                    player.number = newNum;
                     // Also update isGoalkeeper just in case
                     player.isGoalkeeper = (newPos === 'Portero');
                     saveCustomPosition(currentlyEditingPlayerId, newPos);
+                    saveCustomNumber(currentlyEditingPlayerId, newNum);
+                    saveCurrentTeamDraftToLocal();
                     renderPlayerList();
                     updateTacticalView();
                 }
@@ -3381,7 +3422,11 @@ window.addEventListener('DOMContentLoaded', () => {
         if (rawDrafts) {
             const draftsObj = JSON.parse(rawDrafts);
             if (draftsObj && draftsObj.filial && Array.isArray(draftsObj.filial.squadState)) {
-                draftsObj.filial.squadState = draftsObj.filial.squadState.filter(p => p.id !== 'f-jlrbh' && !p.name.includes('Jose Luis Ruiz'));
+                draftsObj.filial.squadState = draftsObj.filial.squadState.filter(p => 
+                    p.id !== 'f-jlrbh' && !p.name.includes('Jose Luis Ruiz') &&
+                    p.id !== 'f-34-m' && !p.name.includes('Madagascar') &&
+                    p.id !== 'f-ejbr' && !p.name.includes('Eduardo Jos')
+                );
                 localStorage.setItem('laNuciaFS_drafts', JSON.stringify(draftsObj));
             }
         }

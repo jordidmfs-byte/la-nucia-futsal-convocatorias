@@ -1634,6 +1634,11 @@ function sendWhatsApp() {
 
     text += `\n_CD La Nucía FS ${teamTitle} 2026/2027_`;
 
+    // Guardar automáticamente en el historial para que nunca se pierda la convocatoria
+    try {
+        saveCurrentToHistory().catch(e => console.warn('Error guardando en historial desde WhatsApp:', e));
+    } catch (e) {}
+
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const waUrl = isMobile
         ? 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text)
@@ -1871,6 +1876,7 @@ const PROTECTED_HISTORY_RIVALS = [
     'canet', 'hospitalet', 'bellsport', 'castelldefels', 'serelles', 'paidos', 'castalla'
 ];
 const PROTECTED_HISTORY_IDS = [
+    '1792548000000',
     '1790900000001',
     '1790900000002',
     '1790326565400',
@@ -2145,7 +2151,15 @@ async function saveCurrentToHistory() {
         existingIndex = history.findIndex(h => String(h.id) === String(activeLoadedHistoryId));
     }
     
-    // If not loaded by ID, check if there's already an existing record for the exact same team and rival
+    // If not loaded by ID, check if there's already an existing record for the exact same team and jornada
+    if (existingIndex === -1 && jornadaVal && jornadaVal.toLowerCase() !== 'desconocida') {
+        existingIndex = history.findIndex(h => 
+            h.team === currentTeam && 
+            (h.jornada || '').trim().toLowerCase() === jornadaVal.toLowerCase()
+        );
+    }
+    
+    // Fallback: match by rival if jornada wasn't matched
     if (existingIndex === -1 && rivalVal && rivalVal.toLowerCase() !== 'desconocido') {
         existingIndex = history.findIndex(h => 
             h.team === currentTeam && 

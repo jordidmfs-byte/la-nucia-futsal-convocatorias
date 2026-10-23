@@ -13,8 +13,7 @@ const FIRST_TEAM_PLAYERS = [
     { id: '1-8', number: 8, name: 'Sergio Lago Mayorga "Lago"', position: 'Ala zurdo', isGoalkeeper: false },
     { id: '1-21', number: 21, name: 'Julian De Diego García "Juli"', position: 'Pivot zurdo', isGoalkeeper: false },
     { id: '1-alcayde', number: 14, name: 'Manuel Alcayde "Manuel"', position: 'Ala diestro', isGoalkeeper: false },
-    { id: '1-19', number: 19, name: 'Omar Molines Arranz "Omar"', position: 'Ala diestro', isGoalkeeper: false },
-    { id: '1-franz-monzo', number: '', name: 'Franz Esteban Monzo Cáceres', position: 'Ala zurdo', isGoalkeeper: false }
+    { id: '1-19', number: 19, name: 'Omar Molines Arranz "Omar"', position: 'Ala diestro', isGoalkeeper: false }
 ];
 
 const FILIAL_TEAM_PLAYERS = [
@@ -531,8 +530,15 @@ function addGuestPlayerToSquad() {
         teamSource = 'Juvenil';
     }
     
+    // Si Angel Vargas (jugador juvenil) se añade en convocatoria del primer equipo, dorsal 30
+    let guestNumber = guestPlayer.number;
+    if (currentTeam === 'primer-equipo' && (guestPlayer.id === 'j-avm' || guestPlayer.name.includes('Angel Vargas'))) {
+        guestNumber = 30;
+    }
+    
     squadState.push({
         ...guestPlayer,
+        number: guestNumber,
         id: 'guest-' + guestPlayer.id,
         isCalled: true,
         reason: '',
@@ -3421,12 +3427,28 @@ window.addEventListener('DOMContentLoaded', () => {
         const rawDrafts = localStorage.getItem('laNuciaFS_drafts');
         if (rawDrafts) {
             const draftsObj = JSON.parse(rawDrafts);
+            let draftsChanged = false;
+            if (draftsObj && draftsObj['primer-equipo'] && Array.isArray(draftsObj['primer-equipo'].squadState)) {
+                draftsObj['primer-equipo'].squadState = draftsObj['primer-equipo'].squadState.filter(p => 
+                    p.id !== '1-franz-monzo' && !p.name.includes('Franz Esteban Monzo')
+                );
+                // Si Angel Vargas ya estaba como invitado en el borrador de primer equipo, asegurar dorsal 30
+                draftsObj['primer-equipo'].squadState.forEach(p => {
+                    if (p.id === 'guest-j-avm' || p.name.includes('Angel Vargas')) {
+                        p.number = 30;
+                    }
+                });
+                draftsChanged = true;
+            }
             if (draftsObj && draftsObj.filial && Array.isArray(draftsObj.filial.squadState)) {
                 draftsObj.filial.squadState = draftsObj.filial.squadState.filter(p => 
                     p.id !== 'f-jlrbh' && !p.name.includes('Jose Luis Ruiz') &&
                     p.id !== 'f-34-m' && !p.name.includes('Madagascar') &&
                     p.id !== 'f-ejbr' && !p.name.includes('Eduardo Jos')
                 );
+                draftsChanged = true;
+            }
+            if (draftsChanged) {
                 localStorage.setItem('laNuciaFS_drafts', JSON.stringify(draftsObj));
             }
         }

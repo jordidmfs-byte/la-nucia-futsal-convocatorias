@@ -1583,6 +1583,8 @@ function sendWhatsApp() {
     };
     const teamTitle = teamTitleMap[currentTeam] || '1º EQUIPO';
 
+    let text = `🔴⚫ *CONVOCATORIA OFICIAL - LA NUCÍA FS (${teamTitle})* 🔴⚫\n\n`;
+
     if (currentTeam === 'primer-equipo') {
         text += `⚽ *Competición / Jornada:* ${jornadaVal}\n`;
     } else {
@@ -1643,7 +1645,12 @@ function sendWhatsApp() {
     const waUrl = isMobile
         ? 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text)
         : 'https://web.whatsapp.com/send?text=' + encodeURIComponent(text);
-    window.open(waUrl, '_blank');
+    
+    // Intentar abrir en nueva pestaña o redirigir si el navegador móvil bloquea popups
+    const win = window.open(waUrl, '_blank');
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+        window.location.href = waUrl;
+    }
 }
 
 // ── CLOUD REALTIME SYNCHRONIZATION ──────────────────────────────────────────
@@ -2711,7 +2718,12 @@ async function sendPlanViajeWhatsApp() {
     const waUrl = isMobile
         ? 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text)
         : 'https://web.whatsapp.com/send?text=' + encodeURIComponent(text);
-    window.open(waUrl, '_blank');
+    
+    // Intentar abrir en nueva pestaña o redirigir si el navegador móvil bloquea popups
+    const win = window.open(waUrl, '_blank');
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+        window.location.href = waUrl;
+    }
 }
 
 // Event Listeners setup

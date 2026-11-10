@@ -494,11 +494,19 @@ function populateGuestDropdownToAdd() {
 }
 
 // Add a selected guest player to the squadState by name
+function normalizePlayerText(str) {
+    if (!str) return '';
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
 function addGuestPlayerToSquad() {
     const searchInput = document.getElementById('input-guest-search');
     if (!searchInput) return;
-    const playerName = searchInput.value.trim();
-    if (!playerName) return;
+    const rawInput = searchInput.value.trim();
+    if (!rawInput) {
+        alert('Por favor, introduce o selecciona un jugador de la lista.');
+        return;
+    }
     
     let availablePlayers = [];
     if (currentTeam === 'primer-equipo') {
@@ -509,18 +517,42 @@ function addGuestPlayerToSquad() {
         return;
     }
     
-    const guestPlayer = availablePlayers.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+    // Normalizar búsqueda para que no fallen acentos, mayúsculas o nombres parciales
+    const normInput = normalizePlayerText(rawInput);
+    
+    // 1. Coincidencia exacta
+    let guestPlayer = availablePlayers.find(p => normalizePlayerText(p.name) === normInput);
+    
+    // 2. Coincidencia por inicio de nombre
     if (!guestPlayer) {
-        alert('No se ha encontrado a ningún jugador invitado con ese nombre exacto. Selecciona uno de la lista.');
+        guestPlayer = availablePlayers.find(p => normalizePlayerText(p.name).startsWith(normInput));
+    }
+    
+    // 3. Coincidencia si todas las palabras introducidas están en el nombre
+    if (!guestPlayer) {
+        const words = normInput.split(/\s+/).filter(Boolean);
+        guestPlayer = availablePlayers.find(p => {
+            const pNorm = normalizePlayerText(p.name);
+            return words.every(w => pNorm.includes(w));
+        });
+    }
+    
+    // 4. Coincidencia parcial general
+    if (!guestPlayer) {
+        guestPlayer = availablePlayers.find(p => normalizePlayerText(p.name).includes(normInput));
+    }
+    
+    if (!guestPlayer) {
+        alert('No se ha encontrado a ningún jugador con "' + rawInput + '". Selecciona uno de la lista sugerida.');
         return;
     }
     
     const playerId = guestPlayer.id;
     
     // Check if already in squadState
-    const exists = squadState.some(p => p.id === 'guest-' + playerId || p.id === playerId);
+    const exists = squadState.some(p => p.id === 'guest-' + playerId || p.id === playerId || normalizePlayerText(p.name) === normalizePlayerText(guestPlayer.name));
     if (exists) {
-        alert('Este jugador ya ha sido añadido a la convocatoria.');
+        alert('El jugador ' + guestPlayer.name + ' ya está en la convocatoria.');
         searchInput.value = '';
         return;
     }
@@ -532,7 +564,7 @@ function addGuestPlayerToSquad() {
     
     // Si Angel Vargas (jugador juvenil) se añade en convocatoria del primer equipo, dorsal 30
     let guestNumber = guestPlayer.number;
-    if (currentTeam === 'primer-equipo' && (guestPlayer.id === 'j-avm' || guestPlayer.name.includes('Angel Vargas'))) {
+    if (currentTeam === 'primer-equipo' && (guestPlayer.id === 'j-avm' || normalizePlayerText(guestPlayer.name).includes('angel vargas'))) {
         guestNumber = 30;
     }
     
@@ -549,6 +581,7 @@ function addGuestPlayerToSquad() {
     searchInput.value = '';
     renderPlayerList();
     updateTacticalView();
+    saveCurrentTeamDraftToLocal();
     queueCloudSync();
 }
 
@@ -557,6 +590,7 @@ function removeGuestPlayer(id) {
     squadState = squadState.filter(p => p.id !== id);
     renderPlayerList();
     updateTacticalView();
+    saveCurrentTeamDraftToLocal();
     queueCloudSync();
 }
 
@@ -2995,20 +3029,20 @@ function setupEventListeners() {
     
     const btnAddSearch = document.getElementById('btn-add-guest-search');
     if (btnAddSearch) {
-        btnAddSearch.addEventListener('click', (e) => {
-            e.preventDefault();
+        btnAddSearch.onclick = (e) => {
+            if (e) e.preventDefault();
             addGuestPlayerToSquad();
-        });
+        };
     }
     
     const inputSearch = document.getElementById('input-guest-search');
     if (inputSearch) {
-        inputSearch.addEventListener('keypress', (e) => {
+        inputSearch.onkeydown = (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 addGuestPlayerToSquad();
             }
-        });
+        };
     }
     
     const clearBtn = document.getElementById('clear-transcript-btn');

@@ -19,7 +19,6 @@ const FIRST_TEAM_PLAYERS = [
 const FILIAL_TEAM_PLAYERS = [
     { id: 'f-13', number: 13, name: 'Hector Valero Rubio', position: 'Portero', isGoalkeeper: true },
     { id: 'f-12', number: 12, name: 'Mario Daniel Padilla Reyes', position: 'Portero', isGoalkeeper: true },
-    { id: 'f-jlhr', number: '', name: 'Jose Luis Heredia Ruiz', position: 'Portero', isGoalkeeper: true },
     { id: 'f-daa', number: '', name: 'Diego Agustin Aguilar', position: 'Portero', isGoalkeeper: true },
     { id: 'f-23', number: 23, name: 'Sergio Juarez Sanchez', position: 'Cierre', isGoalkeeper: false },
     { id: 'f-10', number: 10, name: 'Joan Manuel Misa Giarrusso', position: 'Cierre', isGoalkeeper: false },
@@ -3503,6 +3502,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (draftsObj && draftsObj.filial && Array.isArray(draftsObj.filial.squadState)) {
                 draftsObj.filial.squadState = draftsObj.filial.squadState.filter(p => 
                     p.id !== 'f-jlrbh' && !p.name.includes('Jose Luis Ruiz') &&
+                    p.id !== 'f-jlhr' && !p.name.includes('Jose Luis Heredia') &&
                     p.id !== 'f-34-m' && !p.name.includes('Madagascar') &&
                     p.id !== 'f-ejbr' && !p.name.includes('Eduardo Jos')
                 );

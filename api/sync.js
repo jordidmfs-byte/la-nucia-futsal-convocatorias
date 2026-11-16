@@ -38,13 +38,15 @@ module.exports = async (req, res) => {
             apiRes.on('data', (chunk) => { data += chunk; });
             apiRes.on('end', () => {
                 let cleanData = data;
-                // If third-party service appends HTML or advertising scripts, strip them out
-                const firstBrace = data.indexOf('{');
-                if (firstBrace !== -1) {
-                    const lastBrace = data.lastIndexOf('}');
-                    if (lastBrace > firstBrace) {
-                        cleanData = data.slice(firstBrace, lastBrace + 1);
-                    }
+                // If third-party service appends HTML or advertising scripts, strip them out before finding braces
+                const htmlTagIndex = cleanData.search(/<[!a-zA-Z]/);
+                if (htmlTagIndex !== -1) {
+                    cleanData = cleanData.slice(0, htmlTagIndex).trim();
+                }
+                const firstBrace = cleanData.indexOf('{');
+                const lastBrace = cleanData.lastIndexOf('}');
+                if (firstBrace !== -1 && lastBrace > firstBrace) {
+                    cleanData = cleanData.slice(firstBrace, lastBrace + 1);
                 }
                 res.setHeader('Content-Type', 'application/json');
                 res.status(apiRes.statusCode).send(cleanData);
@@ -74,12 +76,14 @@ module.exports = async (req, res) => {
             apiRes.on('data', (chunk) => { data += chunk; });
             apiRes.on('end', () => {
                 let cleanData = data;
-                const firstBrace = data.indexOf('{');
-                if (firstBrace !== -1) {
-                    const lastBrace = data.lastIndexOf('}');
-                    if (lastBrace > firstBrace) {
-                        cleanData = data.slice(firstBrace, lastBrace + 1);
-                    }
+                const htmlTagIndex = cleanData.search(/<[!a-zA-Z]/);
+                if (htmlTagIndex !== -1) {
+                    cleanData = cleanData.slice(0, htmlTagIndex).trim();
+                }
+                const firstBrace = cleanData.indexOf('{');
+                const lastBrace = cleanData.lastIndexOf('}');
+                if (firstBrace !== -1 && lastBrace > firstBrace) {
+                    cleanData = cleanData.slice(firstBrace, lastBrace + 1);
                 }
                 res.setHeader('Content-Type', 'application/json');
                 res.status(apiRes.statusCode).send(cleanData);

@@ -37,7 +37,17 @@ module.exports = async (req, res) => {
             let data = '';
             apiRes.on('data', (chunk) => { data += chunk; });
             apiRes.on('end', () => {
-                res.status(apiRes.statusCode).send(data);
+                let cleanData = data;
+                // If third-party service appends HTML or advertising scripts, strip them out
+                const firstBrace = data.indexOf('{');
+                if (firstBrace !== -1) {
+                    const lastBrace = data.lastIndexOf('}');
+                    if (lastBrace > firstBrace) {
+                        cleanData = data.slice(firstBrace, lastBrace + 1);
+                    }
+                }
+                res.setHeader('Content-Type', 'application/json');
+                res.status(apiRes.statusCode).send(cleanData);
             });
         }).on('error', (err) => {
             res.status(500).json({ error: err.message });
@@ -63,7 +73,16 @@ module.exports = async (req, res) => {
             let data = '';
             apiRes.on('data', (chunk) => { data += chunk; });
             apiRes.on('end', () => {
-                res.status(apiRes.statusCode).send(data);
+                let cleanData = data;
+                const firstBrace = data.indexOf('{');
+                if (firstBrace !== -1) {
+                    const lastBrace = data.lastIndexOf('}');
+                    if (lastBrace > firstBrace) {
+                        cleanData = data.slice(firstBrace, lastBrace + 1);
+                    }
+                }
+                res.setHeader('Content-Type', 'application/json');
+                res.status(apiRes.statusCode).send(cleanData);
             });
         });
 

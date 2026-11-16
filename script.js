@@ -1760,7 +1760,27 @@ async function fetchCloudData() {
             headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
         });
         if (!res.ok) return;
-        const data = await res.json();
+        
+        // Parse safely stripping out any rogue HTML if appended by proxy/cloud provider
+        let data = null;
+        try {
+            const rawText = await res.text();
+            let cleanText = rawText;
+            const htmlTagIndex = cleanText.search(/<[!a-zA-Z]/);
+            if (htmlTagIndex !== -1) {
+                cleanText = cleanText.slice(0, htmlTagIndex).trim();
+            }
+            const firstBrace = cleanText.indexOf('{');
+            const lastBrace = cleanText.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace > firstBrace) {
+                cleanText = cleanText.slice(firstBrace, lastBrace + 1);
+            }
+            data = JSON.parse(cleanText);
+        } catch (jsonErr) {
+            console.warn('Error parseando JSON de la nube:', jsonErr);
+            return;
+        }
+
         if (!data || typeof data !== 'object') return;
 
         // 1. Sync & merge deleted history IDs across devices
@@ -2127,7 +2147,8 @@ function updateEditingBanner() {
         return;
     }
 
-    const record = history.find(h => String(h.id) === String(activeLoadedHistoryId));
+    const currentHist = getHistory();
+    const record = currentHist.find(h => String(h.id) === String(activeLoadedHistoryId));
     if (!record) {
         activeLoadedHistoryId = null;
         if (banner) banner.style.display = 'none';
@@ -2256,6 +2277,7 @@ async function saveCurrentToHistory() {
     saveHistory(history);
     renderHistory();
     updateEditingBanner();
+    saveCurrentTeamDraftToLocal();
     
     // Push immediately to cloud and await confirmation
     updateCloudStatus('syncing');
@@ -2420,7 +2442,7 @@ function renderHistory() {
         if (tabJuv) tabJuv.style.display = 'none';
         
         // En Primer Equipo (contraseña lanucia), NUNCA sale filial ni juvenil ni su historial bajo ningún concepto
-        const primerEquipoRecords = history.filter(r => r && r.team === 'primer-equipo');
+        const primerEquipoRecords = history.filter(r => r && r.team === 'primer-equipo').sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         
         if (primerEquipoRecords.length === 0) {
             container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No hay convocatorias guardadas del Primer Equipo.</div>';
@@ -2494,9 +2516,9 @@ function renderHistory() {
     // Otherwise, render Filial / Juvenil view for restricted users
     let baseHistory = [];
     if (userRole === 'filial' || currentStoredAuth === 'filial') {
-        baseHistory = history.filter(r => r && (r.team === 'filial' || r.team === 'juvenil'));
+        baseHistory = history.filter(r => r && (r.team === 'filial' || r.team === 'juvenil')).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     } else if (userRole === 'juvenil' || currentStoredAuth === 'juvenil') {
-        baseHistory = history.filter(r => r && r.team === 'juvenil');
+        baseHistory = history.filter(r => r && r.team === 'juvenil').sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     }
 
     if (baseHistory.length === 0) {

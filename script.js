@@ -41,7 +41,6 @@ const JUVENIL_TEAM_PLAYERS = [
     { id: 'j-ots', number: 77, name: 'Óscar Triguero Sánchez', position: 'Ala diestro', isGoalkeeper: false },
     { id: 'j-jjpr', number: 26, name: 'Juan Jose Parra Rojas', position: 'Ala zurdo', isGoalkeeper: false },
     { id: 'j-sme', number: 22, name: 'Siam Monserrat Escobar', position: 'Cierre', isGoalkeeper: false },
-    { id: 'j-jsa', number: 18, name: 'Jordi Serra Antolí', position: 'Ala zurdo', isGoalkeeper: false },
     { id: 'j-kf', number: '', name: 'Kelvin Fernandez', position: 'Pivot diestro', isGoalkeeper: false },
     { id: 'j-jp', number: '', name: 'José Perez', position: 'Ala diestro', isGoalkeeper: false },
     { id: 'j-fs', number: 16, name: 'Francesc Soriano (CS)', position: 'Ala diestro', isGoalkeeper: false },
@@ -50,7 +49,6 @@ const JUVENIL_TEAM_PLAYERS = [
     { id: 'j-ifc', number: 66, name: 'Iker Fernandez Casellas', position: 'Cierre', isGoalkeeper: false },
     { id: 'j-pvf', number: 14, name: 'Pablo Vaello Fernandez', position: 'Cierre', isGoalkeeper: false },
     { id: 'j-pmb', number: 88, name: 'Pablo Martin Botia', position: 'Pivot zurdo', isGoalkeeper: false },
-    { id: 'j-msd', number: 36, name: 'Marc Saval Dueñas', position: 'Ala diestro', isGoalkeeper: false },
     { id: 'j-src', number: '', name: 'Sebastián Ramírez Caballero (CS)', position: 'Portero', isGoalkeeper: true },
     { id: 'j-djg', number: '', name: 'Daniel Jose Galindez', position: 'Ala zurdo', isGoalkeeper: false }
 ];
@@ -3533,7 +3531,16 @@ window.addEventListener('DOMContentLoaded', () => {
                     p.id !== 'f-jlrbh' && !p.name.includes('Jose Luis Ruiz') &&
                     p.id !== 'f-jlhr' && !p.name.includes('Jose Luis Heredia') &&
                     p.id !== 'f-34-m' && !p.name.includes('Madagascar') &&
-                    p.id !== 'f-ejbr' && !p.name.includes('Eduardo Jos')
+                    p.id !== 'f-ejbr' && !p.name.includes('Eduardo Jos') &&
+                    p.id !== 'guest-j-jsa' && !p.name.includes('Jordi Serra') &&
+                    p.id !== 'guest-j-msd' && !p.name.includes('Marc Saval')
+                );
+                draftsChanged = true;
+            }
+            if (draftsObj && draftsObj.juvenil && Array.isArray(draftsObj.juvenil.squadState)) {
+                draftsObj.juvenil.squadState = draftsObj.juvenil.squadState.filter(p => 
+                    p.id !== 'j-jsa' && !p.name.includes('Jordi Serra') &&
+                    p.id !== 'j-msd' && !p.name.includes('Marc Saval')
                 );
                 draftsChanged = true;
             }

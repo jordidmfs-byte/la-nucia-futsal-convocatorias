@@ -365,7 +365,7 @@ function loadTeamData(team) {
         const draftsStr = localStorage.getItem('laNuciaFS_drafts');
         const drafts = draftsStr ? JSON.parse(draftsStr) : {};
         setParadas(drafts[team]?.paradas || []);
-        activeLoadedHistoryId = drafts[team]?.activeLoadedHistoryId || null;
+        activeLoadedHistoryId = null;
         if (typeof updateEditingBanner === 'function') {
             updateEditingBanner();
         }
@@ -2146,48 +2146,10 @@ function resetWorkspaceToNew(team = currentTeam) {
 let activeLoadedHistoryId = null;
 
 function updateEditingBanner() {
-    let banner = document.getElementById('editing-history-banner');
-    if (!activeLoadedHistoryId) {
-        if (banner) banner.style.display = 'none';
-        return;
+    const banner = document.getElementById('editing-history-banner');
+    if (banner) {
+        banner.style.display = 'none';
     }
-
-    const currentHist = getHistory();
-    const record = currentHist.find(h => String(h.id) === String(activeLoadedHistoryId));
-    if (!record) {
-        activeLoadedHistoryId = null;
-        if (banner) banner.style.display = 'none';
-        return;
-    }
-
-    if (!banner) {
-        banner = document.createElement('div');
-        banner.id = 'editing-history-banner';
-        banner.style.cssText = 'background: rgba(37, 99, 235, 0.18); border: 1px solid rgba(59, 130, 246, 0.5); color: #93c5fd; padding: 12px 18px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-        const workspaceGrid = document.getElementById('workspace-grid');
-        if (workspaceGrid && workspaceGrid.parentNode) {
-            workspaceGrid.parentNode.insertBefore(banner, workspaceGrid);
-        }
-    }
-
-    banner.style.cssText = 'background: rgba(37, 99, 235, 0.18); border: 1px solid rgba(59, 130, 246, 0.5); color: #93c5fd; padding: 12px 18px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-    banner.style.display = 'flex';
-    banner.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 18px;">✏️</span>
-            <div>
-                <div style="font-weight: bold; color: #ffffff;">Modificando convocatoria: ${record.jornada} vs ${record.rival} (${record.schedule || 'Sin fecha'})</div>
-                <div style="font-size: 12px; color: #94a3b8;">Al pulsar "Guardar Convocatoria", se guardarán los cambios directamente en este partido sin generar uno nuevo.</div>
-            </div>
-        </div>
-        <button type="button" id="btn-cancel-edit-history" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: background 0.2s;">Guardar como nueva en su lugar</button>
-    `;
-
-    document.getElementById('btn-cancel-edit-history')?.addEventListener('click', () => {
-        activeLoadedHistoryId = null;
-        updateEditingBanner();
-        showToast('Desvinculado: al guardar se creará una convocatoria nueva.');
-    });
 }
 
 async function saveCurrentToHistory() {
